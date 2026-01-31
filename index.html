@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fdf6ec;--card:#fff8f0;--card2:#fff0e0;--text:#3b2a1a;--text2:#6b5a45;--border:#e8d8c4;--btn:#c97b4a;--btnH:#b86d3e;--acc:#c97b4a;--sh:0 4px 18px rgba(0,0,0,.08);--cell:#fff3e8;--cellB:#dcc8ad;--hdr:linear-gradient(135deg,#f9c074,#f0a05a);--inp:#fff;--ovl:rgba(59,42,26,.55);--mod:#fff8f0;--sel:0 0 0 3px #c97b4a;--win:#4caf50;--lose:#e57373}
 [data-theme=dark]{--bg:#1a1210;--card:#2a2220;--card2:#322a22;--text:#f0e6d8;--text2:#b8a890;--border:#3f3530;--btn:#c97b4a;--btnH:#b86d3e;--acc:#e8a87c;--sh:0 4px 18px rgba(0,0,0,.35);--cell:#322a22;--cellB:#4a403a;--hdr:linear-gradient(135deg,#3a2a1a,#2a1e10);--inp:#2a2220;--ovl:rgba(0,0,0,.6);--mod:#2a2220;--sel:0 0 0 3px #e8a87c;--win:#66bb6a;--lose:#ef5350}
-body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background .3s,color .3s}
 .hdr{background:var(--hdr);padding:16px 20px 12px;text-align:center;position:relative;box-shadow:var(--sh)}
 .hdr h1{font-size:1.6em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.2)}
 .hdr .sub{font-size:.78em;color:rgba(255,255,255,.8)}
@@ -91,6 +91,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .clrBtn{background:none;border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.72em;margin-top:8px;display:block;margin-left:auto;margin-right:auto}
 .clrBtn:hover{border-color:var(--lose);color:var(--lose)}
 .noH{color:var(--text2);font-size:.8em;text-align:center;padding:12px 0}
+.ftr{text-align:center;padding:12px;font-size:.75em;color:var(--text2);margin-top:auto}
 </style>
 </head>
 <body data-theme="bright">
@@ -164,7 +165,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
+<footer class="ftr" id="footer">V <span id="ver">1.0.0</span></footer>
 <script>
+const VERSION={major:1,minor:0,patch:0};
+document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
 function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{})}
