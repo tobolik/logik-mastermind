@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍄 Logik</title>
+<script>try{var t=localStorage.getItem('logik_theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#fdf6ec;--card:#fff8f0;--card2:#fff0e0;--text:#3b2a1a;--text2:#6b5a45;--border:#e8d8c4;--btn:#c97b4a;--btnH:#b86d3e;--acc:#c97b4a;--sh:0 4px 18px rgba(0,0,0,.08);--cell:#fff3e8;--cellB:#dcc8ad;--hdr:linear-gradient(135deg,#f9c074,#f0a05a);--inp:#fff;--ovl:rgba(59,42,26,.55);--mod:#fff8f0;--sel:0 0 0 3px #c97b4a;--win:#4caf50;--lose:#e57373}
-[data-theme=dark]{--bg:#1a1210;--card:#2a2220;--card2:#322a22;--text:#f0e6d8;--text2:#b8a890;--border:#3f3530;--btn:#c97b4a;--btnH:#b86d3e;--acc:#e8a87c;--sh:0 4px 18px rgba(0,0,0,.35);--cell:#322a22;--cellB:#4a403a;--hdr:linear-gradient(135deg,#3a2a1a,#2a1e10);--inp:#2a2220;--ovl:rgba(0,0,0,.6);--mod:#2a2220;--sel:0 0 0 3px #e8a87c;--win:#66bb6a;--lose:#ef5350}
+:root[data-theme=dark],body[data-theme=dark]{--bg:#1a1210;--card:#2a2220;--card2:#322a22;--text:#f0e6d8;--text2:#b8a890;--border:#3f3530;--btn:#c97b4a;--btnH:#b86d3e;--acc:#e8a87c;--sh:0 4px 18px rgba(0,0,0,.35);--cell:#322a22;--cellB:#4a403a;--hdr:linear-gradient(135deg,#3a2a1a,#2a1e10);--inp:#2a2220;--ovl:rgba(0,0,0,.6);--mod:#2a2220;--sel:0 0 0 3px #e8a87c;--win:#66bb6a;--lose:#ef5350}
 body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
 .hdr{background:var(--hdr);padding:16px 20px 12px;text-align:center;position:relative;box-shadow:var(--sh)}
 .hdr h1{font-size:1.6em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.2)}
@@ -131,7 +132,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="rn">🔓</div><div id="secPegs" style="display:flex;gap:5px"></div><div class="secLbl">Tajný kód</div>
   </div>
   <div class="board" id="board"></div>
-  <div class="palSec"><div class="palLbl">Vyber políčko (Q–R), pak barvu (1–8)</div><div class="pal" id="palette"></div></div>
+  <div class="palSec"><div class="palLbl">Políčko: Q–R nebo ←→ · Barva: 1–8</div><div class="pal" id="palette"></div></div>
   <div class="abts">
     <button class="bSub" id="subBtn" onclick="submitGuess()" disabled>Odeslat</button>
     <button class="bClr" onclick="clearGuess()">Vymazat</button>
@@ -165,9 +166,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">1.0.3</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:3};
+const VERSION={major:1,minor:0,patch:4};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -189,14 +190,16 @@ let stats=[];
 let s2p=[null,null,null,null];
 let selectedSlot=null;
 
-const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings'};
+const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme'};
 function loadStats(){try{const d=localStorage.getItem(STORAGE_KEYS.stats);if(d){stats=JSON.parse(d)}}catch(e){stats=[]}}
 function saveStats(){try{localStorage.setItem(STORAGE_KEYS.stats,JSON.stringify(stats))}catch(e){}}
 function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters)}}catch(e){}}
 function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
-loadStats();loadSettings();
+function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright'){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}}catch(e){}}
+function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
+loadStats();loadSettings();loadTheme();
 
-function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';b.dataset.theme=dk?'bright':'dark';document.getElementById('tglBtn').textContent=dk?'🌙':'☀️'}
+function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';const t=dk?'bright':'dark';b.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=dk?'🌙':'☀️';saveTheme()}
 function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
 
 function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
@@ -287,7 +290,7 @@ function renderPal(){
     el.appendChild(d);
   }
 }
-function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal()}
+function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal()}
 function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal()}
 function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.getElementById('subBtn').disabled=true;renderBoard();renderPal()}
 
@@ -347,6 +350,8 @@ document.addEventListener('keydown',function(e){
   }
   if(!gameActive||G.over)return;
   const k=e.key.toLowerCase();
+  if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();e.preventDefault();return}
+  if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();e.preventDefault();return}
   if(k==='q'||k==='w'||k==='e'||k==='r'){const idx={'q':0,'w':1,'e':2,'r':3}[k];selectOrSetPeg(idx);e.preventDefault();return}
   if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
   if(k==='enter'){submitGuess();e.preventDefault();return}
