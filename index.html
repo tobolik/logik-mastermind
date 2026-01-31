@@ -215,7 +215,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:2,patch:3};
+const VERSION={major:1,minor:2,patch:4};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -245,7 +245,7 @@ function saveStats(){try{localStorage.setItem(STORAGE_KEYS.stats,JSON.stringify(
 function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;G.timeLimit=s.timeLimit||0;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters);setTimeLimit(G.timeLimit)}}catch(e){}}
 function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters,timeLimit:G.timeLimit};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
 function saveGame(){try{G.elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;const state={G:G,selectedSlot:selectedSlot};localStorage.setItem(STORAGE_KEYS.game,JSON.stringify(state))}catch(e){}}
-function loadGame(){try{const d=localStorage.getItem(STORAGE_KEYS.game);if(d){const state=JSON.parse(d);if(state.G&&state.G.secret&&state.G.secret.length>0&&!state.G.over){G=state.G;if(G.elapsed)G.startTime=Date.now()-G.elapsed*1000;selectedSlot=state.selectedSlot;return true}}return false}catch(e){return false}}
+function loadGame(){try{const curTimeLimit=G.timeLimit;const d=localStorage.getItem(STORAGE_KEYS.game);if(d){const state=JSON.parse(d);if(state.G&&state.G.secret&&state.G.secret.length>0&&!state.G.over){G=state.G;G.timeLimit=curTimeLimit;if(G.elapsed)G.startTime=Date.now()-G.elapsed*1000;selectedSlot=state.selectedSlot;return true}}return false}catch(e){return false}}
 function clearGame(){try{localStorage.removeItem(STORAGE_KEYS.game)}catch(e){}}
 function applyTheme(t){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}
 function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright')applyTheme(t)}catch(e){}}
