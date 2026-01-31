@@ -110,7 +110,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="card">
     <h2>Zahájit novou hru</h2>
     <div class="sr"><label>Herní mód</label>
-      <div class="btnRow"><button class="act" id="m1p" onclick="setMode('1p')">🤖 1 hráč</button><button id="m2p" onclick="setMode('2p')">👥 2 hráče</button></div>
+      <div class="btnRow"><button class="act" id="m1p" onclick="setMode('1p')">🤖 1 hráč</button><button id="m2p" onclick="setMode('2p')">👥 2 hráči</button></div>
     </div>
     <div class="sr" id="n1r"><label>Tvé jméno</label><input type="text" id="n1" placeholder="Hráč 1" maxlength="16" onblur="saveSettings()"></div>
     <div class="sr" id="n2r" style="display:none"><label>Jméno 2. hráče</label><input type="text" id="n2" placeholder="Hráč 2" maxlength="16" onblur="saveSettings()"></div>
@@ -120,7 +120,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="sr" id="diffR"><label>Obtížnost</label>
       <div class="btnRow"><button class="act" id="dE" onclick="setDiff('easy')">Lehká</button><button id="dM" onclick="setDiff('medium')">Střed</button><button id="dH" onclick="setDiff('hard')">Těžká</button></div>
     </div>
-    <button class="startBtn" onclick="initAudio();startGame()">Začnit hru ▶</button>
+    <button class="startBtn" onclick="initAudio();startGame()">Začít hru ▶</button>
   </div>
 </div>
 <div class="pg" id="pg-game">
