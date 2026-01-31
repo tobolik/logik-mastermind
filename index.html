@@ -68,6 +68,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .bSub:hover{background:var(--btnH)}
 .bSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .bClr{background:var(--card2);color:var(--text2)}
+.colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
+.colorPop.show{display:block;animation:mIn .15s ease}
+.colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
+.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.colorPop .peg{width:44px;height:44px}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
 .secLbl{font-size:.7em;color:var(--text2);margin-left:auto;font-weight:600;text-transform:uppercase}
 .ovl{display:none;position:fixed;inset:0;background:var(--ovl);z-index:100;justify-content:center;align-items:center}
@@ -213,9 +218,13 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
+<div class="colorPop" id="colorPop">
+  <div class="cpTitle">Vyber barvu</div>
+  <div class="cpColors" id="cpColors"></div>
+</div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:2,patch:4};
+const VERSION={major:1,minor:3,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -330,10 +339,39 @@ function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.le
 function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;G.startTime=Date.now();showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
 function cancelSecret(){document.getElementById('secOvl').classList.remove('show');showTab('setup',0)}
 
-function selectOrSetPeg(idx){
+function selectOrSetPeg(idx,evt){
   if(G.over)return;
-  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);return}
-  selectedSlot=idx;renderBoard();renderPal()
+  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);hideColorPop();return}
+  selectedSlot=idx;renderBoard();renderPal();
+  if(evt)showColorPop(evt)
+}
+function showColorPop(evt){
+  const pop=document.getElementById('colorPop');
+  const colors=document.getElementById('cpColors');
+  colors.innerHTML='';
+  for(let i=0;i<G.colC;i++){
+    const d=document.createElement('div');d.className='peg';d.style.background=C[i].h;
+    d.onclick=(()=>{const id=i;return(e)=>{e.stopPropagation();pickColorPop(id)}})();
+    colors.appendChild(d);
+  }
+  const rect=evt.target.getBoundingClientRect();
+  const popW=Math.min(G.colC*52+24,280);
+  let left=rect.left+rect.width/2-popW/2;
+  let top=rect.bottom+8;
+  if(left<8)left=8;
+  if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8;
+  if(top+150>window.innerHeight){top=rect.top-150}
+  pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
+  pop.classList.add('show');
+}
+function hideColorPop(){document.getElementById('colorPop').classList.remove('show')}
+function pickColorPop(id){
+  if(G.over||selectedSlot===null)return;
+  G.guess[selectedSlot]=id;playSnd('peg');
+  document.getElementById('subBtn').disabled=G.guess.includes(null);
+  const nextSlot=selectedSlot<3?selectedSlot+1:null;
+  hideColorPop();
+  selectedSlot=nextSlot;renderBoard();renderPal();saveGame();
 }
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
@@ -356,8 +394,8 @@ function renderBoard(){
     row.innerHTML=html;
     for(let j=0;j<4;j++){
       const p=document.createElement('div');
-      if(G.guess[j]!==null){p.className='peg'+(selectedSlot===j?' slotSel':'');p.style.background=C[G.guess[j]].h;p.onclick=(()=>{const idx=j;return()=>selectOrSetPeg(idx)})()}
-      else{p.className='peg ep'+(selectedSlot===j?' slotSel':'');p.onclick=(()=>{const idx=j;return()=>selectOrSetPeg(idx)})()}
+      if(G.guess[j]!==null){p.className='peg'+(selectedSlot===j?' slotSel':'');p.style.background=C[G.guess[j]].h;p.onclick=(()=>{const idx=j;return(e)=>selectOrSetPeg(idx,e)})()}
+      else{p.className='peg ep'+(selectedSlot===j?' slotSel':'');p.onclick=(()=>{const idx=j;return(e)=>selectOrSetPeg(idx,e)})()}
       row.appendChild(p);
     }
     el.appendChild(row);
@@ -379,9 +417,9 @@ function renderPal(){
     el.appendChild(d);
   }
 }
-function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();saveGame()}
+function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);hideColorPop();selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();saveGame()}
 function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal();saveGame()}
-function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.getElementById('subBtn').disabled=true;renderBoard();renderPal();saveGame()}
+function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;hideColorPop();document.getElementById('subBtn').disabled=true;renderBoard();renderPal();saveGame()}
 
 function submitGuess(){
   if(G.over||G.guess.includes(null))return;
@@ -513,7 +551,11 @@ document.addEventListener('keydown',function(e){
   if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
   if(k==='enter'){submitGuess();e.preventDefault();return}
   if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
-  if(k==='escape'){selectedSlot=null;renderBoard();renderPal();e.preventDefault()}
+  if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault()}
+});
+document.addEventListener('click',function(e){
+  const pop=document.getElementById('colorPop');
+  if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.classList.contains('peg')){hideColorPop();selectedSlot=null;renderBoard();renderPal()}
 });
 </script>
 </body>
