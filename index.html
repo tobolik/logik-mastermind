@@ -298,12 +298,12 @@ function submitGuess(){
   if(G.over||G.guess.includes(null))return;
   const fb=calcFB(G.secret,G.guess);
   G.hist.push({guess:[...G.guess],fb});
-  G.guess=[null,null,null,null];selectedSlot=null;
+  G.guess=[null,null,null,null];
   document.getElementById('subBtn').disabled=true;
   playSnd('submit');
-  if(fb.b===4){G.over=true;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
-  else if(G.hist.length>=G.maxA){G.over=true;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
-  else{renderBoard();renderPal()}
+  if(fb.b===4){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
+  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
+  else{selectedSlot=0;renderBoard();renderPal()}
 }
 
 function revealSecret(){
