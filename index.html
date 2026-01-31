@@ -25,9 +25,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .sr label{font-size:.76em;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
 .sr input{padding:8px 10px;border-radius:8px;border:1px solid var(--cellB);background:var(--inp);color:var(--text);font-size:.9em;outline:none}
 .sr input:focus{border-color:var(--acc)}
+.diffDesc{font-size:.72em;color:var(--text2);text-align:center;margin-top:6px}
 .btnRow{display:flex;gap:6px}
 .btnRow button{flex:1;padding:9px 4px;border-radius:8px;border:2px solid var(--border);background:var(--cell);color:var(--text);cursor:pointer;font-size:.82em;font-weight:600;text-align:center;transition:all .2s}
 .btnRow button.act{border-color:var(--acc);background:var(--acc);color:#fff}
+:root[data-theme=dark] .btnRow button.act{color:#1a1210}
 .startBtn{width:100%;padding:11px;border:none;border-radius:10px;background:var(--btn);color:#fff;font-size:.95em;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
 .startBtn:hover{background:var(--btnH)}
 .startBtn:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
@@ -142,7 +144,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="btnRow"><button class="act" id="we1" onclick="setWhoEnters(1)">Hráč 1</button><button id="we2" onclick="setWhoEnters(2)">Hráč 2</button></div>
     </div>
     <div class="sr" id="diffR"><label>Obtížnost</label>
-      <div class="btnRow"><button class="act" id="dE" onclick="setDiff('easy')">Lehká</button><button id="dM" onclick="setDiff('medium')">Střed</button><button id="dH" onclick="setDiff('hard')">Těžká</button></div>
+      <div class="btnRow"><button class="act" id="dE" onclick="setDiff('easy')" title="6 barev, bez opakování, 12 pokusů">Lehká</button><button id="dM" onclick="setDiff('medium')" title="6 barev, s opakováním, 10 pokusů">Střední</button><button id="dH" onclick="setDiff('hard')" title="8 barev, s opakováním, 8 pokusů">Těžká</button></div>
+      <div class="diffDesc" id="diffDesc"></div>
     </div>
     <div class="sr"><label>Časový limit</label>
       <div class="btnRow"><button class="act" id="tlOff" onclick="setTimeLimit(0)">Vypnuto</button><button id="tl3" onclick="setTimeLimit(3)">3 min</button><button id="tl5" onclick="setTimeLimit(5)">5 min</button><button id="tl10" onclick="setTimeLimit(10)">10 min</button></div>
@@ -212,7 +215,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:2,patch:1};
+const VERSION={major:1,minor:2,patch:2};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -248,7 +251,7 @@ function applyTheme(t){document.body.dataset.theme=t;document.documentElement.se
 function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright')applyTheme(t)}catch(e){}}
 function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
 if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{if(!localStorage.getItem(STORAGE_KEYS.theme)){applyTheme(e.matches?'dark':'bright')}})}
-loadStats();loadSettings();loadTheme();
+loadStats();loadSettings();loadTheme();setDiff(G.diff);
 function restoreGame(){if(loadGame()){showTab('game',1);renderBoard();renderPal();document.getElementById('subBtn').disabled=G.guess.includes(null);startTimer()}}
 setTimeout(restoreGame,0);
 
@@ -256,7 +259,8 @@ function toggleTheme(){const dk=document.body.dataset.theme==='dark';const t=dk?
 function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
 
 function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
-function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');saveSettings()}
+const DIFF_DESC={easy:'6 barev · bez opakování · 12 pokusů',medium:'6 barev · s opakováním · 10 pokusů',hard:'8 barev · s opakováním · 8 pokusů'};
+function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');document.getElementById('diffDesc').textContent=DIFF_DESC[d];saveSettings()}
 function setWhoEnters(w){G.whoEnters=w;document.getElementById('we1').classList.toggle('act',w===1);document.getElementById('we2').classList.toggle('act',w===2);saveSettings()}
 function setTimeLimit(m){G.timeLimit=m;['Off','3','5','10'].forEach(x=>document.getElementById('tl'+x).classList.remove('act'));document.getElementById('tl'+(m===0?'Off':m)).classList.add('act');saveSettings()}
 
