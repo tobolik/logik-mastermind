@@ -49,7 +49,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .peg.slotSel{box-shadow:var(--sel);transform:scale(1.08);border-color:var(--acc)}
 .fb{display:flex;flex-wrap:wrap;gap:2px;width:44px;justify-content:center;margin-left:auto}
 .fbp{width:11px;height:11px;border-radius:50%}
-.fbb{background:#2d2d2d;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.fbb{background:#2d2d2d;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1px solid transparent}
+:root[data-theme=dark] .fbb{border-color:#888}
 .fbw{background:#fff;border:2px solid #999}
 .palSec{background:var(--card);border-radius:12px;padding:12px 14px;border:1px solid var(--border);box-shadow:var(--sh);margin-bottom:10px}
 .palLbl{font-size:.72em;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;font-weight:600}
@@ -168,7 +169,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:6};
+const VERSION={major:1,minor:0,patch:7};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
