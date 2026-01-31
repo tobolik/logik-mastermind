@@ -202,6 +202,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <div class="ovl" id="secOvl">
   <div class="modal">
+    <button class="mClose" onclick="cancelSecret()" title="Zrušit (ESC)">✕</button>
     <h2 id="secTitle" style="font-size:1.15em;color:var(--acc)">Zadej tajný kód</h2>
     <p id="secDesc"></p>
     <div id="secPal" style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div>
@@ -211,7 +212,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:2,patch:0};
+const VERSION={major:1,minor:2,patch:1};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -320,6 +321,7 @@ function renderSecDisp(){
 function pickS(id){const idx=s2p.indexOf(null);if(idx===-1)return;s2p[idx]=id;playSnd('peg');renderSecDisp()}
 function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.length<4)ng.push(null);s2p=[...ng];renderSecDisp()}
 function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;G.startTime=Date.now();showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
+function cancelSecret(){document.getElementById('secOvl').classList.remove('show');showTab('setup',0)}
 
 function selectOrSetPeg(idx){
   if(G.over)return;
@@ -488,8 +490,12 @@ document.addEventListener('keydown',function(e){
     return;
   }
   if(secActive){
-    const k=e.key;if(k>='1'&&k<='8'){const id=parseInt(k)-1;if(id<G.colC){pickS(id);e.preventDefault()}}
-    else if(k==='Backspace'){let last=-1;for(let i=3;i>=0;i--)if(s2p[i]!==null){last=i;break}if(last>=0){removeS(last);e.preventDefault()}}return;
+    const k=e.key;
+    if(k==='Escape'){cancelSecret();e.preventDefault();return}
+    if(k>='1'&&k<='8'){const id=parseInt(k)-1;if(id<G.colC){pickS(id);e.preventDefault()}}
+    else if(k==='Backspace'){let last=-1;for(let i=3;i>=0;i--)if(s2p[i]!==null){last=i;break}if(last>=0){removeS(last);e.preventDefault()}}
+    else if(k==='Enter'&&!s2p.includes(null)){confirmSecret();e.preventDefault()}
+    return;
   }
   if(!gameActive)return;
   if(G.over){if(e.key==='Escape'){e.preventDefault()}return}
