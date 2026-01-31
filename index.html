@@ -98,6 +98,23 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .sItem .sa{color:var(--text2)}
 .clrBtn{background:none;border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.72em;margin-top:8px;display:block;margin-left:auto;margin-right:auto}
 .clrBtn:hover{border-color:var(--lose);color:var(--lose)}
+.sTabs{display:flex;gap:4px;margin-bottom:12px}
+.sTab{flex:1;padding:6px 4px;border:none;border-radius:8px;cursor:pointer;font-size:.75em;font-weight:600;background:var(--border);color:var(--text2);transition:all .2s}
+.sTab.act{background:var(--btn);color:#fff}
+.pSel{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--cellB);background:var(--inp);color:var(--text);font-size:.85em;margin-bottom:10px}
+.cmpBox{background:var(--cell);border-radius:10px;padding:12px;border:1px solid var(--border);margin-bottom:10px}
+.cmpTitle{font-size:.8em;font-weight:700;color:var(--acc);text-align:center;margin-bottom:8px}
+.cmpRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.78em}
+.cmpRow .cmpN{font-weight:600;flex:1}
+.cmpRow .cmpV{font-weight:700;color:var(--acc);width:50px;text-align:center}
+.cmpRow .cmpBar{flex:2;height:8px;background:var(--border);border-radius:4px;margin:0 8px;overflow:hidden;display:flex}
+.cmpBar .cmpL{background:var(--btn);height:100%}
+.cmpBar .cmpR{background:var(--win);height:100%}
+.pCard{background:var(--cell);border-radius:10px;padding:10px;border:1px solid var(--border);margin-bottom:8px}
+.pCard .pName{font-weight:700;color:var(--acc);font-size:.9em;margin-bottom:6px}
+.pCard .pStats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:.72em;color:var(--text2)}
+.pCard .pStats span{text-align:center}
+.pCard .pStats .pVal{font-weight:700;color:var(--text)}
 .noH{color:var(--text2);font-size:.8em;text-align:center;padding:12px 0}
 .ftr{text-align:center;padding:12px;font-size:.75em;color:var(--text2)}
 </style>
@@ -152,13 +169,27 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div class="pg" id="pg-stats">
   <div class="card">
     <h2>📊 Statistiky</h2>
-    <div class="sGrid">
-      <div class="sBox"><div class="val" id="stT">0</div><div class="lbl">Celkem her</div></div>
-      <div class="sBox"><div class="val" id="stW">0</div><div class="lbl">Výhry</div></div>
-      <div class="sBox"><div class="val" id="stB">–</div><div class="lbl">Nejlepší</div></div>
-      <div class="sBox"><div class="val" id="stA">–</div><div class="lbl">Průměr pokusů</div></div>
+    <div class="sTabs">
+      <button class="sTab act" id="stab0" onclick="showStatTab(0)">Přehled</button>
+      <button class="sTab" id="stab1" onclick="showStatTab(1)">Hráči</button>
+      <button class="sTab" id="stab2" onclick="showStatTab(2)">Porovnání</button>
     </div>
-    <div class="sList" id="sList"><div class="noH">Žádné hry zatím.</div></div>
+    <div id="statView0">
+      <div class="sGrid">
+        <div class="sBox"><div class="val" id="stT">0</div><div class="lbl">Celkem her</div></div>
+        <div class="sBox"><div class="val" id="stW">0</div><div class="lbl">Výhry</div></div>
+        <div class="sBox"><div class="val" id="stB">–</div><div class="lbl">Nejlepší</div></div>
+        <div class="sBox"><div class="val" id="stA">–</div><div class="lbl">Průměr pokusů</div></div>
+      </div>
+      <div class="sList" id="sList"><div class="noH">Žádné hry zatím.</div></div>
+    </div>
+    <div id="statView1" style="display:none">
+      <select class="pSel" id="playerSel" onchange="renderPlayerStats()"><option value="">Všichni hráči</option></select>
+      <div id="playerStats"></div>
+    </div>
+    <div id="statView2" style="display:none">
+      <div id="cmpStats"><div class="noH">Žádné hry 2 hráčů zatím.</div></div>
+    </div>
     <button class="clrBtn" onclick="clearStats()">Vymazat statistiky</button>
   </div>
 </div>
@@ -180,7 +211,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:1,patch:0};
+const VERSION={major:1,minor:2,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -376,7 +407,10 @@ function updateEndModalBtns(){document.getElementById('btnAgain').classList.togg
 function playAgain(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();startGame(G.mode==='2p')}
 function goBack(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();showTab('setup',0)}
 
-function addStat(won){const elapsed=Math.floor((Date.now()-G.startTime)/1000);stats.push({name:G.n1,won,att:G.hist.length,time:elapsed,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});saveStats()}
+function addStat(won){const elapsed=Math.floor((Date.now()-G.startTime)/1000);const stat={name:G.n1,won,att:G.hist.length,time:elapsed,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')};if(G.mode==='2p'){stat.opponent=G.codeMaker;stat.breaker=G.codeBreaker;stat.maker=G.codeMaker}stats.push(stat);saveStats()}
+
+let statTab=0;
+function showStatTab(t){statTab=t;[0,1,2].forEach(i=>{document.getElementById('stab'+i).classList.toggle('act',i===t);document.getElementById('statView'+i).style.display=i===t?'block':'none'});if(t===1)renderPlayerStats();if(t===2)renderComparisonStats()}
 
 function renderStats(){
   const wins=stats.filter(s=>s.won);
@@ -392,7 +426,53 @@ function renderStats(){
     d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pok. · '+timeStr+' · '+s.diff+' · '+s.date+'</span>';
     el.appendChild(d);
   });
+  populatePlayerSel();
+  if(statTab===1)renderPlayerStats();
+  if(statTab===2)renderComparisonStats();
 }
+
+function getPlayers(){const names=new Set();stats.forEach(s=>{names.add(s.name);if(s.opponent)names.add(s.opponent)});return[...names].sort()}
+function populatePlayerSel(){const sel=document.getElementById('playerSel');const cur=sel.value;sel.innerHTML='<option value="">Všichni hráči</option>';getPlayers().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=cur}
+
+function renderPlayerStats(){
+  const el=document.getElementById('playerStats');el.innerHTML='';
+  const selPlayer=document.getElementById('playerSel').value;
+  const players=selPlayer?[selPlayer]:getPlayers();
+  if(!players.length){el.innerHTML='<div class="noH">Žádní hráči zatím.</div>';return}
+  players.forEach(p=>{
+    const pGames=stats.filter(s=>s.name===p);
+    const pWins=pGames.filter(s=>s.won);
+    const winRate=pGames.length?Math.round(pWins.length/pGames.length*100):0;
+    const bestAtt=pWins.length?Math.min(...pWins.map(s=>s.att)):'–';
+    const avgAtt=pWins.length?Math.round(pWins.reduce((a,s)=>a+s.att,0)/pWins.length*10)/10:'–';
+    const avgTime=pWins.length?formatTime(Math.round(pWins.reduce((a,s)=>a+(s.time||0),0)/pWins.length)):'–';
+    const d=document.createElement('div');d.className='pCard';
+    d.innerHTML='<div class="pName">👤 '+p+'</div><div class="pStats"><span>Her: <span class="pVal">'+pGames.length+'</span></span><span>Výhry: <span class="pVal">'+pWins.length+' ('+winRate+'%)</span></span><span>Nejlepší: <span class="pVal">'+bestAtt+'</span></span><span>Ø pokusy: <span class="pVal">'+avgAtt+'</span></span><span>Ø čas: <span class="pVal">'+avgTime+'</span></span><span></span></div>';
+    el.appendChild(d);
+  });
+}
+
+function renderComparisonStats(){
+  const el=document.getElementById('cmpStats');el.innerHTML='';
+  const games2p=stats.filter(s=>s.mode==='2p'&&s.breaker&&s.maker);
+  if(!games2p.length){el.innerHTML='<div class="noH">Žádné hry 2 hráčů zatím.</div>';return}
+  const pairs={};
+  games2p.forEach(s=>{
+    const key=[s.breaker,s.maker].sort().join(' vs ');
+    if(!pairs[key])pairs[key]={p1:s.breaker<s.maker?s.breaker:s.maker,p2:s.breaker<s.maker?s.maker:s.breaker,games:[],w1:0,w2:0};
+    pairs[key].games.push(s);
+    if(s.won){if(s.breaker===pairs[key].p1)pairs[key].w1++;else pairs[key].w2++}
+  });
+  Object.values(pairs).forEach(pair=>{
+    const total=pair.w1+pair.w2;
+    const pct1=total?Math.round(pair.w1/total*100):50;
+    const pct2=100-pct1;
+    const d=document.createElement('div');d.className='cmpBox';
+    d.innerHTML='<div class="cmpTitle">'+pair.p1+' vs '+pair.p2+'</div><div class="cmpRow"><span class="cmpN">'+pair.p1+'</span><span class="cmpV">'+pair.w1+'</span><div class="cmpBar"><div class="cmpL" style="width:'+pct1+'%"></div><div class="cmpR" style="width:'+pct2+'%"></div></div><span class="cmpV">'+pair.w2+'</span><span class="cmpN" style="text-align:right">'+pair.p2+'</span></div><div style="text-align:center;font-size:.7em;color:var(--text2);margin-top:4px">Celkem her: '+pair.games.length+'</div>';
+    el.appendChild(d);
+  });
+}
+
 function clearStats(){stats=[];saveStats();renderStats()}
 
 document.addEventListener('keydown',function(e){
