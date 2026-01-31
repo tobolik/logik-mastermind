@@ -71,8 +71,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
 .colorPop.show{display:block;animation:mIn .15s ease}
 .colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
-.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
 .colorPop .peg{width:44px;height:44px}
+.colorPop .cpSub{width:100%;padding:9px;border:none;border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.colorPop .cpSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
 .secLbl{font-size:.7em;color:var(--text2);margin-left:auto;font-weight:600;text-transform:uppercase}
 .ovl{display:none;position:fixed;inset:0;background:var(--ovl);z-index:100;justify-content:center;align-items:center}
@@ -221,10 +223,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div class="colorPop" id="colorPop">
   <div class="cpTitle">Vyber barvu</div>
   <div class="cpColors" id="cpColors"></div>
+  <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:3,patch:0};
+const VERSION={major:1,minor:3,patch:2};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -354,24 +357,34 @@ function showColorPop(evt){
     d.onclick=(()=>{const id=i;return(e)=>{e.stopPropagation();pickColorPop(id)}})();
     colors.appendChild(d);
   }
-  const rect=evt.target.getBoundingClientRect();
-  const popW=Math.min(G.colC*52+24,280);
-  let left=rect.left+rect.width/2-popW/2;
-  let top=rect.bottom+8;
+  // Find current row and position popup below it
+  const curRow=document.querySelector('.grow.cur');
+  const rect=curRow?curRow.getBoundingClientRect():evt.target.getBoundingClientRect();
+  const popW=Math.min(G.colC*52+24,300);
+  let left=rect.left+(rect.width-popW)/2;
+  let top=rect.bottom+6;
   if(left<8)left=8;
   if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8;
-  if(top+150>window.innerHeight){top=rect.top-150}
+  if(top+180>window.innerHeight){top=rect.top-180}
   pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
+  document.getElementById('cpSubBtn').disabled=G.guess.includes(null);
   pop.classList.add('show');
 }
 function hideColorPop(){document.getElementById('colorPop').classList.remove('show')}
 function pickColorPop(id){
   if(G.over||selectedSlot===null)return;
   G.guess[selectedSlot]=id;playSnd('peg');
-  document.getElementById('subBtn').disabled=G.guess.includes(null);
-  const nextSlot=selectedSlot<3?selectedSlot+1:null;
+  const allFilled=!G.guess.includes(null);
+  document.getElementById('subBtn').disabled=!allFilled;
+  document.getElementById('cpSubBtn').disabled=!allFilled;
+  selectedSlot=selectedSlot<3?selectedSlot+1:null;
+  renderBoard();renderPal();saveGame();
+  if(selectedSlot===null&&!allFilled){hideColorPop()}
+}
+function submitFromPop(){
+  if(G.guess.includes(null))return;
   hideColorPop();
-  selectedSlot=nextSlot;renderBoard();renderPal();saveGame();
+  submitGuess();
 }
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
