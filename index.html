@@ -168,7 +168,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:4};
+const VERSION={major:1,minor:0,patch:5};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -298,12 +298,12 @@ function submitGuess(){
   if(G.over||G.guess.includes(null))return;
   const fb=calcFB(G.secret,G.guess);
   G.hist.push({guess:[...G.guess],fb});
-  G.guess=[null,null,null,null];selectedSlot=null;
+  G.guess=[null,null,null,null];
   document.getElementById('subBtn').disabled=true;
   playSnd('submit');
-  if(fb.b===4){G.over=true;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
-  else if(G.hist.length>=G.maxA){G.over=true;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
-  else{renderBoard();renderPal()}
+  if(fb.b===4){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
+  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
+  else{selectedSlot=0;renderBoard();renderPal()}
 }
 
 function revealSecret(){
