@@ -215,7 +215,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:2,patch:2};
+const VERSION={major:1,minor:2,patch:3};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -258,9 +258,11 @@ setTimeout(restoreGame,0);
 function toggleTheme(){const dk=document.body.dataset.theme==='dark';const t=dk?'bright':'dark';applyTheme(t);saveTheme()}
 function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
 
-function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
+function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';updateDiffDesc();saveSettings()}
 const DIFF_DESC={easy:'6 barev · bez opakování · 12 pokusů',medium:'6 barev · s opakováním · 10 pokusů',hard:'8 barev · s opakováním · 8 pokusů'};
-function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');document.getElementById('diffDesc').textContent=DIFF_DESC[d];saveSettings()}
+const DIFF_DESC_2P={easy:'6 barev · 12 pokusů',medium:'6 barev · 10 pokusů',hard:'8 barev · 8 pokusů'};
+function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');updateDiffDesc();saveSettings()}
+function updateDiffDesc(){document.getElementById('diffDesc').textContent=(G.mode==='2p'?DIFF_DESC_2P:DIFF_DESC)[G.diff]+(G.mode==='2p'?' · opakování volí zadávající':'')}
 function setWhoEnters(w){G.whoEnters=w;document.getElementById('we1').classList.toggle('act',w===1);document.getElementById('we2').classList.toggle('act',w===2);saveSettings()}
 function setTimeLimit(m){G.timeLimit=m;['Off','3','5','10'].forEach(x=>document.getElementById('tl'+x).classList.remove('act'));document.getElementById('tl'+(m===0?'Off':m)).classList.add('act');saveSettings()}
 
@@ -301,8 +303,9 @@ function startGame(swap2P){
   G.n2=G.mode==='2p'?(document.getElementById('n2').value.trim()||'Hráč 2'):'Počítač';
   G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;G.startTime=Date.now();G.elapsed=0;
   document.getElementById('secReveal').style.display='none';
-  if(G.mode==='1p'){const cfg=D[G.diff];G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
-  else{G.colC=6;G.maxA=10;G.secret=[];
+  const cfg=D[G.diff];
+  if(G.mode==='1p'){G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
+  else{G.colC=cfg.c;G.maxA=cfg.a;G.secret=[];
     if(swap2P&&G.codeMaker){G.whoEnters=G.whoEnters===1?2:1;setWhoEnters(G.whoEnters)}
     G.codeMaker=G.whoEnters===1?G.n1:G.n2;G.codeBreaker=G.whoEnters===1?G.n2:G.n1;
     show2P()}
