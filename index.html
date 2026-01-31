@@ -168,7 +168,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 </div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:5};
+const VERSION={major:1,minor:0,patch:6};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -190,16 +190,23 @@ let stats=[];
 let s2p=[null,null,null,null];
 let selectedSlot=null;
 
-const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme'};
+const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme',game:'logik_game'};
 function loadStats(){try{const d=localStorage.getItem(STORAGE_KEYS.stats);if(d){stats=JSON.parse(d)}}catch(e){stats=[]}}
 function saveStats(){try{localStorage.setItem(STORAGE_KEYS.stats,JSON.stringify(stats))}catch(e){}}
 function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters)}}catch(e){}}
 function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
-function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright'){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}}catch(e){}}
+function saveGame(){try{const state={G:G,selectedSlot:selectedSlot};localStorage.setItem(STORAGE_KEYS.game,JSON.stringify(state))}catch(e){}}
+function loadGame(){try{const d=localStorage.getItem(STORAGE_KEYS.game);if(d){const state=JSON.parse(d);if(state.G&&state.G.secret&&state.G.secret.length>0&&!state.G.over){G=state.G;selectedSlot=state.selectedSlot;return true}}return false}catch(e){return false}}
+function clearGame(){try{localStorage.removeItem(STORAGE_KEYS.game)}catch(e){}}
+function applyTheme(t){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}
+function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright')applyTheme(t)}catch(e){}}
 function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{if(!localStorage.getItem(STORAGE_KEYS.theme)){applyTheme(e.matches?'dark':'bright')}})}
 loadStats();loadSettings();loadTheme();
+function restoreGame(){if(loadGame()){showTab('game',1);renderBoard();renderPal();document.getElementById('subBtn').disabled=G.guess.includes(null)}}
+setTimeout(restoreGame,0);
 
-function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';const t=dk?'bright':'dark';b.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=dk?'🌙':'☀️';saveTheme()}
+function toggleTheme(){const dk=document.body.dataset.theme==='dark';const t=dk?'bright':'dark';applyTheme(t);saveTheme()}
 function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
 
 function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
@@ -216,7 +223,7 @@ function startGame(swap2P){
   G.n2=G.mode==='2p'?(document.getElementById('n2').value.trim()||'Hráč 2'):'Počítač';
   G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;
   document.getElementById('secReveal').style.display='none';
-  if(G.mode==='1p'){const cfg=D[G.diff];G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal()}
+  if(G.mode==='1p'){const cfg=D[G.diff];G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();saveGame()}
   else{G.colC=6;G.maxA=10;G.secret=[];
     if(swap2P&&G.codeMaker){G.whoEnters=G.whoEnters===1?2:1;setWhoEnters(G.whoEnters)}
     G.codeMaker=G.whoEnters===1?G.n1:G.n2;G.codeBreaker=G.whoEnters===1?G.n2:G.n1;
@@ -239,7 +246,7 @@ function renderSecDisp(){
 }
 function pickS(id){const idx=s2p.indexOf(null);if(idx===-1)return;s2p[idx]=id;playSnd('peg');renderSecDisp()}
 function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.length<4)ng.push(null);s2p=[...ng];renderSecDisp()}
-function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;showTab('game',1);renderBoard();renderPal()}
+function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;showTab('game',1);renderBoard();renderPal();saveGame()}
 
 function selectOrSetPeg(idx){
   if(G.over)return;
@@ -290,9 +297,9 @@ function renderPal(){
     el.appendChild(d);
   }
 }
-function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal()}
-function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal()}
-function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.getElementById('subBtn').disabled=true;renderBoard();renderPal()}
+function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();saveGame()}
+function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal();saveGame()}
+function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.getElementById('subBtn').disabled=true;renderBoard();renderPal();saveGame()}
 
 function submitGuess(){
   if(G.over||G.guess.includes(null))return;
@@ -301,9 +308,9 @@ function submitGuess(){
   G.guess=[null,null,null,null];
   document.getElementById('subBtn').disabled=true;
   playSnd('submit');
-  if(fb.b===4){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
-  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
-  else{selectedSlot=0;renderBoard();renderPal()}
+  if(fb.b===4){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(true);clearGame();setTimeout(()=>showEnd(true),500)}
+  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);clearGame();setTimeout(()=>showEnd(false),500)}
+  else{selectedSlot=0;renderBoard();renderPal();saveGame()}
 }
 
 function revealSecret(){
@@ -319,8 +326,8 @@ function showEnd(won){
   else{t.className='lose';t.textContent='😞 Prohra';m.textContent='Tajný kód nebyl uhoden za '+G.maxA+' pokusů.';playSnd('lose')}
   document.getElementById('endOvl').classList.add('show');
 }
-function playAgain(){document.getElementById('endOvl').classList.remove('show');startGame(G.mode==='2p')}
-function goBack(){document.getElementById('endOvl').classList.remove('show');showTab('setup',0)}
+function playAgain(){document.getElementById('endOvl').classList.remove('show');clearGame();startGame(G.mode==='2p')}
+function goBack(){document.getElementById('endOvl').classList.remove('show');clearGame();showTab('setup',0)}
 
 function addStat(won){stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});saveStats()}
 
