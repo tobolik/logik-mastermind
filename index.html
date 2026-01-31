@@ -68,11 +68,16 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .bSub:hover{background:var(--btnH)}
 .bSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .bClr{background:var(--card2);color:var(--text2)}
-.colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
+.colorPop{display:none;position:relative;z-index:50;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--sh);border:1px solid var(--border);margin-top:8px;margin-bottom:8px}
 .colorPop.show{display:block;animation:mIn .15s ease}
-.colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
-.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.colorPop .peg{width:44px;height:44px}
+.colorPop .cpTitle{font-size:.72em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
+.colorPop .cpColors{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+.colorPop .peg{width:40px;height:40px}
+.colorPop .cpBtns{display:flex;gap:6px}
+.colorPop .cpBtns button{flex:1;padding:8px;border:none;border-radius:8px;font-size:.82em;font-weight:700;cursor:pointer}
+.colorPop .cpSub{background:var(--btn);color:#fff}
+.colorPop .cpSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
+.colorPop .cpClr{background:var(--card2);color:var(--text2)}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
 .secLbl{font-size:.7em;color:var(--text2);margin-left:auto;font-weight:600;text-transform:uppercase}
 .ovl{display:none;position:fixed;inset:0;background:var(--ovl);z-index:100;justify-content:center;align-items:center}
@@ -168,6 +173,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="rn">🔓</div><div id="secPegs" style="display:flex;gap:5px"></div><div class="secLbl">Tajný kód</div>
   </div>
   <div class="board" id="board"></div>
+  <div class="colorPop" id="colorPop">
+    <div class="cpTitle">Vyber barvu pro pozici <span id="cpSlot">1</span></div>
+    <div class="cpColors" id="cpColors"></div>
+    <div class="cpBtns">
+      <button class="cpSub" id="cpSubBtn" onclick="submitGuess()" disabled>Odeslat</button>
+      <button class="cpClr" onclick="clearGuess()">Vymazat</button>
+    </div>
+  </div>
   <div class="palSec"><div class="palLbl">Políčko: Q–R nebo ←→ · Barva: 1–8</div><div class="pal" id="palette"></div></div>
   <div class="abts">
     <button class="bSub" id="subBtn" onclick="submitGuess()" disabled>Odeslat</button>
@@ -218,13 +231,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<div class="colorPop" id="colorPop">
-  <div class="cpTitle">Vyber barvu</div>
-  <div class="cpColors" id="cpColors"></div>
-</div>
 <footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
 <script>
-const VERSION={major:1,minor:3,patch:0};
+const VERSION={major:1,minor:3,patch:1};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -261,7 +270,7 @@ function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&w
 function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
 if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{if(!localStorage.getItem(STORAGE_KEYS.theme)){applyTheme(e.matches?'dark':'bright')}})}
 loadStats();loadSettings();loadTheme();setDiff(G.diff);
-function restoreGame(){if(loadGame()){showTab('game',1);renderBoard();renderPal();document.getElementById('subBtn').disabled=G.guess.includes(null);startTimer()}}
+function restoreGame(){if(loadGame()){showTab('game',1);renderBoard();renderPal();showColorPop();startTimer()}}
 setTimeout(restoreGame,0);
 
 function toggleTheme(){const dk=document.body.dataset.theme==='dark';const t=dk?'bright':'dark';applyTheme(t);saveTheme()}
@@ -300,7 +309,7 @@ function updateTimerDisplay(){
     row.classList.toggle('warn',remaining<=30);
   }else{el.textContent=formatTime(elapsed);row.classList.remove('warn')}
 }
-function timeOut(){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);clearGame();playSnd('lose');setTimeout(()=>showEnd(false,true),500)}
+function timeOut(){G.over=true;selectedSlot=null;hideColorPop();renderBoard();revealSecret();addStat(false);clearGame();playSnd('lose');setTimeout(()=>showEnd(false,true),500)}
 
 function genSecret(cnt,rep){const av=[];for(let i=0;i<cnt;i++)av.push(i);const code=[];const pool=[...av];for(let i=0;i<4;i++){const idx=Math.floor(Math.random()*pool.length);code.push(pool[idx]);if(!rep)pool.splice(idx,1)}return code}
 
@@ -310,10 +319,10 @@ function startGame(swap2P){
   saveSettings();stopTimer();
   G.n1=document.getElementById('n1').value.trim()||(G.mode==='1p'?'Hráč':'Hráč 1');
   G.n2=G.mode==='2p'?(document.getElementById('n2').value.trim()||'Hráč 2'):'Počítač';
-  G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;G.startTime=Date.now();G.elapsed=0;
+  G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=0;G.startTime=Date.now();G.elapsed=0;
   document.getElementById('secReveal').style.display='none';
   const cfg=D[G.diff];
-  if(G.mode==='1p'){G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
+  if(G.mode==='1p'){G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();showColorPop();startTimer();saveGame()}
   else{G.colC=cfg.c;G.maxA=cfg.a;G.secret=[];
     if(swap2P&&G.codeMaker){G.whoEnters=G.whoEnters===1?2:1;setWhoEnters(G.whoEnters)}
     G.codeMaker=G.whoEnters===1?G.n1:G.n2;G.codeBreaker=G.whoEnters===1?G.n2:G.n1;
@@ -336,16 +345,15 @@ function renderSecDisp(){
 }
 function pickS(id){const idx=s2p.indexOf(null);if(idx===-1)return;s2p[idx]=id;playSnd('peg');renderSecDisp()}
 function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.length<4)ng.push(null);s2p=[...ng];renderSecDisp()}
-function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;G.startTime=Date.now();showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
+function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;G.startTime=Date.now();showTab('game',1);renderBoard();renderPal();showColorPop();startTimer();saveGame()}
 function cancelSecret(){document.getElementById('secOvl').classList.remove('show');showTab('setup',0)}
 
 function selectOrSetPeg(idx,evt){
   if(G.over)return;
-  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);hideColorPop();return}
-  selectedSlot=idx;renderBoard();renderPal();
-  if(evt)showColorPop(evt)
+  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);return}
+  selectedSlot=idx;renderBoard();renderPal();showColorPop()
 }
-function showColorPop(evt){
+function showColorPop(){
   const pop=document.getElementById('colorPop');
   const colors=document.getElementById('cpColors');
   colors.innerHTML='';
@@ -354,24 +362,24 @@ function showColorPop(evt){
     d.onclick=(()=>{const id=i;return(e)=>{e.stopPropagation();pickColorPop(id)}})();
     colors.appendChild(d);
   }
-  const rect=evt.target.getBoundingClientRect();
-  const popW=Math.min(G.colC*52+24,280);
-  let left=rect.left+rect.width/2-popW/2;
-  let top=rect.bottom+8;
-  if(left<8)left=8;
-  if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8;
-  if(top+150>window.innerHeight){top=rect.top-150}
-  pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
+  document.getElementById('cpSlot').textContent=selectedSlot!==null?(selectedSlot+1):'-';
+  updateColorPopBtns();
   pop.classList.add('show');
 }
 function hideColorPop(){document.getElementById('colorPop').classList.remove('show')}
+function updateColorPopBtns(){
+  const dis=G.guess.includes(null);
+  document.getElementById('subBtn').disabled=dis;
+  document.getElementById('cpSubBtn').disabled=dis;
+}
 function pickColorPop(id){
   if(G.over||selectedSlot===null)return;
   G.guess[selectedSlot]=id;playSnd('peg');
-  document.getElementById('subBtn').disabled=G.guess.includes(null);
-  const nextSlot=selectedSlot<3?selectedSlot+1:null;
-  hideColorPop();
-  selectedSlot=nextSlot;renderBoard();renderPal();saveGame();
+  selectedSlot=selectedSlot<3?selectedSlot+1:null;
+  renderBoard();renderPal();
+  updateColorPopBtns();
+  document.getElementById('cpSlot').textContent=selectedSlot!==null?(selectedSlot+1):'✓';
+  saveGame();
 }
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
@@ -417,9 +425,9 @@ function renderPal(){
     el.appendChild(d);
   }
 }
-function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);hideColorPop();selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();saveGame()}
+function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();updateColorPopBtns();document.getElementById('cpSlot').textContent=selectedSlot!==null?(selectedSlot+1):'✓';saveGame()}
 function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal();saveGame()}
-function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;hideColorPop();document.getElementById('subBtn').disabled=true;renderBoard();renderPal();saveGame()}
+function clearGuess(){G.guess=[null,null,null,null];selectedSlot=0;updateColorPopBtns();document.getElementById('cpSlot').textContent='1';renderBoard();renderPal();saveGame()}
 
 function submitGuess(){
   if(G.over||G.guess.includes(null))return;
@@ -428,9 +436,9 @@ function submitGuess(){
   G.guess=[null,null,null,null];
   document.getElementById('subBtn').disabled=true;
   playSnd('submit');
-  if(fb.b===4){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(true);clearGame();setTimeout(()=>showEnd(true),500)}
-  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(false);clearGame();setTimeout(()=>showEnd(false),500)}
-  else{selectedSlot=0;renderBoard();renderPal();saveGame()}
+  if(fb.b===4){G.over=true;selectedSlot=null;stopTimer();hideColorPop();renderBoard();revealSecret();addStat(true);clearGame();setTimeout(()=>showEnd(true),500)}
+  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;stopTimer();hideColorPop();renderBoard();revealSecret();addStat(false);clearGame();setTimeout(()=>showEnd(false),500)}
+  else{selectedSlot=0;renderBoard();renderPal();showColorPop();saveGame()}
 }
 
 function revealSecret(){
@@ -551,11 +559,7 @@ document.addEventListener('keydown',function(e){
   if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
   if(k==='enter'){submitGuess();e.preventDefault();return}
   if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
-  if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault()}
-});
-document.addEventListener('click',function(e){
-  const pop=document.getElementById('colorPop');
-  if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.classList.contains('peg')){hideColorPop();selectedSlot=null;renderBoard();renderPal()}
+  if(k==='escape'){selectedSlot=null;renderBoard();renderPal();e.preventDefault()}
 });
 </script>
 </body>
