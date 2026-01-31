@@ -111,8 +111,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="sr"><label>Herní mód</label>
       <div class="btnRow"><button class="act" id="m1p" onclick="setMode('1p')">🤖 1 hráč</button><button id="m2p" onclick="setMode('2p')">👥 2 hráče</button></div>
     </div>
-    <div class="sr" id="n1r"><label>Tvé jméno</label><input type="text" id="n1" placeholder="Hráč 1" maxlength="16"></div>
-    <div class="sr" id="n2r" style="display:none"><label>Jméno 2. hráče</label><input type="text" id="n2" placeholder="Hráč 2" maxlength="16"></div>
+    <div class="sr" id="n1r"><label>Tvé jméno</label><input type="text" id="n1" placeholder="Hráč 1" maxlength="16" onblur="saveSettings()"></div>
+    <div class="sr" id="n2r" style="display:none"><label>Jméno 2. hráče</label><input type="text" id="n2" placeholder="Hráč 2" maxlength="16" onblur="saveSettings()"></div>
     <div class="sr" id="whoEntersR" style="display:none"><label>Kdo zadává tajný kód</label>
       <div class="btnRow"><button class="act" id="we1" onclick="setWhoEnters(1)">Hráč 1</button><button id="we2" onclick="setWhoEnters(2)">Hráč 2</button></div>
     </div>
@@ -165,9 +165,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">1.0.2</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">1.0.3</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:2};
+const VERSION={major:1,minor:0,patch:3};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -189,18 +189,26 @@ let stats=[];
 let s2p=[null,null,null,null];
 let selectedSlot=null;
 
+const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings'};
+function loadStats(){try{const d=localStorage.getItem(STORAGE_KEYS.stats);if(d){stats=JSON.parse(d)}}catch(e){stats=[]}}
+function saveStats(){try{localStorage.setItem(STORAGE_KEYS.stats,JSON.stringify(stats))}catch(e){}}
+function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters)}}catch(e){}}
+function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
+loadStats();loadSettings();
+
 function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';b.dataset.theme=dk?'bright':'dark';document.getElementById('tglBtn').textContent=dk?'🌙':'☀️'}
 function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
 
-function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none'}
-function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act')}
-function setWhoEnters(w){G.whoEnters=w;document.getElementById('we1').classList.toggle('act',w===1);document.getElementById('we2').classList.toggle('act',w===2)}
+function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
+function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');saveSettings()}
+function setWhoEnters(w){G.whoEnters=w;document.getElementById('we1').classList.toggle('act',w===1);document.getElementById('we2').classList.toggle('act',w===2);saveSettings()}
 
 function genSecret(cnt,rep){const av=[];for(let i=0;i<cnt;i++)av.push(i);const code=[];const pool=[...av];for(let i=0;i<4;i++){const idx=Math.floor(Math.random()*pool.length);code.push(pool[idx]);if(!rep)pool.splice(idx,1)}return code}
 
 function calcFB(sec,guess){let b=0,w=0;const sR=[],gR=[];for(let i=0;i<4;i++){if(sec[i]===guess[i])b++;else{sR.push(sec[i]);gR.push(guess[i])}}for(const g of gR){const idx=sR.indexOf(g);if(idx!==-1){w++;sR.splice(idx,1)}}return{b,w}}
 
 function startGame(swap2P){
+  saveSettings();
   G.n1=document.getElementById('n1').value.trim()||(G.mode==='1p'?'Hráč':'Hráč 1');
   G.n2=G.mode==='2p'?(document.getElementById('n2').value.trim()||'Hráč 2'):'Počítač';
   G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;
@@ -311,7 +319,7 @@ function showEnd(won){
 function playAgain(){document.getElementById('endOvl').classList.remove('show');startGame(G.mode==='2p')}
 function goBack(){document.getElementById('endOvl').classList.remove('show');showTab('setup',0)}
 
-function addStat(won){stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')})}
+function addStat(won){stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});saveStats()}
 
 function renderStats(){
   const wins=stats.filter(s=>s.won);
@@ -327,7 +335,7 @@ function renderStats(){
     el.appendChild(d);
   });
 }
-function clearStats(){stats=[];renderStats()}
+function clearStats(){stats=[];saveStats();renderStats()}
 
 document.addEventListener('keydown',function(e){
   if(document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
