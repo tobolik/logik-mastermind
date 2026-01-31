@@ -131,7 +131,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="rn">🔓</div><div id="secPegs" style="display:flex;gap:5px"></div><div class="secLbl">Tajný kód</div>
   </div>
   <div class="board" id="board"></div>
-  <div class="palSec"><div class="palLbl">Vyber políčko, pak barvu</div><div class="pal" id="palette"></div></div>
+  <div class="palSec"><div class="palLbl">Vyber políčko (Q–R), pak barvu (1–8)</div><div class="pal" id="palette"></div></div>
   <div class="abts">
     <button class="bSub" id="subBtn" onclick="submitGuess()" disabled>Odeslat</button>
     <button class="bClr" onclick="clearGuess()">Vymazat</button>
@@ -165,9 +165,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">1.0.1</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">1.0.2</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:1};
+const VERSION={major:1,minor:0,patch:2};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
@@ -328,6 +328,23 @@ function renderStats(){
   });
 }
 function clearStats(){stats=[];renderStats()}
+
+document.addEventListener('keydown',function(e){
+  if(document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  const gameActive=document.getElementById('pg-game').classList.contains('act')&&!document.getElementById('endOvl').classList.contains('show');
+  const secActive=document.getElementById('secOvl').classList.contains('show');
+  if(secActive){
+    const k=e.key;if(k>='1'&&k<='8'){const id=parseInt(k)-1;if(id<G.colC){pickS(id);e.preventDefault()}}
+    else if(k==='Backspace'){let last=-1;for(let i=3;i>=0;i--)if(s2p[i]!==null){last=i;break}if(last>=0){removeS(last);e.preventDefault()}}return;
+  }
+  if(!gameActive||G.over)return;
+  const k=e.key.toLowerCase();
+  if(k==='q'||k==='w'||k==='e'||k==='r'){const idx={'q':0,'w':1,'e':2,'r':3}[k];selectOrSetPeg(idx);e.preventDefault();return}
+  if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
+  if(k==='enter'){submitGuess();e.preventDefault();return}
+  if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
+  if(k==='escape'){selectedSlot=null;renderBoard();renderPal();e.preventDefault()}
+});
 </script>
 </body>
 </html>
