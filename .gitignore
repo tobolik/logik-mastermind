@@ -11,3 +11,6 @@ Thumbs.db
 # Env (DB credentials)
 .env
 api/.env
+
+# Secret klíče (SUPABASE_SERVICE_ROLE atd.) – nikdy do frontendu ani sem
+# config.js může být v gitu – obsahuje jen publishable (anon) klíč, ten je určen pro prohlížeč

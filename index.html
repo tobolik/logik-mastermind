@@ -245,11 +245,24 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.0.0</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.1.0</span></footer>
+<script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:0,patch:0};
+const VERSION={major:2,minor:1,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
+const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
+const SUPABASE_ANON_KEY=(typeof window.SUPABASE_ANON_KEY!=='undefined'?window.SUPABASE_ANON_KEY:'');
+function useSupabase(){return !!(SUPABASE_URL&&SUPABASE_ANON_KEY)}
+function supabaseReq(path,opts){const url=SUPABASE_URL+'/rest/v1'+path;return fetch(url,{...opts,headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json',...opts?.headers}})}
+function randomCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<6;i++)c+=chars[Math.floor(Math.random()*chars.length)];return c}
+async function apiSaveResult(payload){if(useSupabase()){await supabaseReq('/results',{method:'POST',body:JSON.stringify({player_name:payload.player_name,mode:payload.mode,won:payload.won,attempts:payload.attempts,difficulty:payload.difficulty||null,game_code:payload.game_code||null})});return}if(API_BASE){const r=await fetch(API_BASE+'/save_result.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return r.json()}}
+async function apiGetStats(playerName){if(useSupabase()){let path='/results?order=created_at.desc&limit=200';if(playerName)path+='&player_name=eq.'+encodeURIComponent(playerName);const r=await supabaseReq(path);const items=await r.json();const wins=items.filter(x=>x.won);return{ok:true,stats:{items,total:items.length,wins:wins.length,best:wins.length?Math.min(...wins.map(x=>x.attempts)):null,avg:wins.length?Math.round(wins.reduce((a,x)=>a+x.attempts,0)/wins.length*10)/10:null}}}if(API_BASE){const r=await fetch(API_BASE+'/get_stats.php?player_name='+encodeURIComponent(playerName||''));return r.json()}return null}
+async function apiCreateGame(player1_name){if(useSupabase()){for(let i=0;i<10;i++){const game_code=randomCode();const r=await supabaseReq('/games',{method:'POST',body:JSON.stringify({game_code,player1_name,status:'waiting',max_attempts:10}),headers:{'Prefer':'return=representation'}});if(r.ok){const data=await r.json();return{ok:true,game_code,game_id:data[0]?.id,join_url:'?online=join&code='+game_code,player1_name}}if(r.status!==409)throw new Error(await r.text())}return{ok:false,error:'Nelze vygenerovat kód'}}const r=await fetch(API_BASE+'/create_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player1_name})});return r.json()}
+async function apiJoinGame(game_code,player2_name){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code));const rows=await r.json();if(!rows||rows.length===0)return{ok:false,error:'Hra nenalezena nebo již skončila'};const row=rows[0];if(row.player2_name){return{ok:true,game_id:row.id,game_code:row.game_code,player1_name:row.player1_name,player2_name:row.player2_name,status:row.status,joined:true}}const up=await supabaseReq('/games?id=eq.'+row.id,{method:'PATCH',body:JSON.stringify({player2_name})});if(!up.ok)return{ok:false,error:'Chyba'};return{ok:true,game_id:row.id,game_code:row.game_code,player1_name:row.player1_name,player2_name:player2_name,status:row.status,joined:true}}const r=await fetch(API_BASE+'/join_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code,player2_name})});return r.json()}
+async function apiGetGame(game_code){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code));const rows=await r.json();if(!rows||rows.length===0)return{ok:false};const row=rows[0];return{ok:true,game_id:row.id,game_code:row.game_code,player1_name:row.player1_name,player2_name:row.player2_name,secret:row.secret,status:row.status,history:row.history||[],max_attempts:row.max_attempts||10,updated_at:row.updated_at}}const r=await fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(game_code));return r.json()}
+async function apiSetSecret(game_code,secret){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code),{method:'PATCH',body:JSON.stringify({secret,status:'secret_entered'})});return{ok:r.ok}}const r=await fetch(API_BASE+'/set_secret.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code,secret})});return r.json()}
+async function apiSubmitGuess(game_code,guess){if(useSupabase()){const data=await apiGetGame(game_code);if(!data.ok||!data.secret)return{ok:false};const history=(data.history||[]).slice();const fb=calcFB(data.secret,guess);history.push({guess:[...guess],fb});let status=data.status==='secret_entered'?'playing':data.status;if(fb.b===4)status='won';else if(history.length>=data.max_attempts)status='lost';const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code),{method:'PATCH',body:JSON.stringify({history,status})});if(!r.ok)return{ok:false};return{ok:true,feedback:fb,history,status,won:status==='won',lost:status==='lost',secret:status==='won'||status==='lost'?data.secret:undefined}}const r=await fetch(API_BASE+'/submit_guess.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code,guess})});return r.json()}
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
 let onlinePollId=null;
@@ -503,11 +516,9 @@ function addStat(won){
   const stat={name:G.n1,won,att:G.hist.length,time:elapsed,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')};
   if(G.mode==='2p'){stat.opponent=G.codeMaker;stat.breaker=G.codeBreaker;stat.maker=G.codeMaker}
   stats.push(stat);saveStats();
-  if(typeof API_BASE!=='undefined'&&API_BASE){
+  if(useSupabase()||API_BASE){
     const mode=onlineGame?'online':G.mode;
-    fetch(API_BASE+'/save_result.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      player_name:G.mode==='2p'?G.codeBreaker:G.n1,won,attempts:G.hist.length,mode,difficulty:G.diff,game_code:onlineGame?onlineGame.game_code:null
-    })}).then(r=>r.json()).catch(()=>{});
+    apiSaveResult({player_name:G.mode==='2p'?G.codeBreaker:G.n1,won,attempts:G.hist.length,mode,difficulty:G.diff,game_code:onlineGame?onlineGame.game_code:null}).catch(()=>{});
   }
 }
 
@@ -516,14 +527,14 @@ function showStatTab(t){statTab=t;[0,1,2].forEach(i=>{document.getElementById('s
 
 function renderStats(){
   const playerName=document.getElementById('n1').value.trim()||'Hráč';
-  if(typeof API_BASE!=='undefined'&&API_BASE){
-    fetch(API_BASE+'/get_stats.php?player_name='+encodeURIComponent(playerName)).then(r=>r.json()).then(data=>{
-      if(data.ok&&data.stats){mergeStatsFromApi(data.stats);renderStatsUI();return}
+  if(useSupabase()||API_BASE){
+    apiGetStats(playerName).then(data=>{
+      if(data&&data.ok&&data.stats){mergeStatsFromApi(data.stats);renderStatsUI();return}
       renderStatsUI();
     }).catch(()=>renderStatsUI());
   }else{renderStatsUI()}
 }
-function mergeStatsFromApi(apiStats){if(apiStats.items){stats=apiStats.items.map(s=>({name:s.player_name,won:!!parseInt(s.won,10),att:parseInt(s.attempts,10),diff:s.difficulty||'',mode:s.mode||'1p',date:s.created_at?new Date(s.created_at).toLocaleDateString('cs-CZ'):''}));saveStats()}}
+function mergeStatsFromApi(apiStats){if(apiStats.items){stats=apiStats.items.map(s=>({name:s.player_name,won:!!(s.won===true||s.won===1||parseInt(s.won,10)===1),att:parseInt(s.attempts,10),diff:s.difficulty||'',mode:s.mode||'1p',date:s.created_at?new Date(s.created_at).toLocaleDateString('cs-CZ'):''}));saveStats()}}
 function renderStatsUI(){
   const wins=stats.filter(s=>s.won);
   document.getElementById('stT').textContent=stats.length;
@@ -589,20 +600,18 @@ function clearStats(){stats=[];saveStats();renderStats()}
 
 function createOnlineGame(){
   const name=document.getElementById('n1').value.trim()||'Hráč 1';
-  fetch(API_BASE+'/create_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player1_name:name})})
-    .then(r=>r.json()).then(data=>{
-      if(!data.ok){alert(data.error||'Chyba');return}
-      onlineGame={game_code:data.game_code,role:'maker',player1_name:data.player1_name,player2_name:null,status:'waiting'};
-      showTab('online',3);
-      showOnlineLobby();
-    }).catch(()=>alert('Nelze připojit k serveru. Zkontroluj API.'));
+  apiCreateGame(name).then(data=>{
+    if(!data||!data.ok){alert(data&&data.error||'Chyba');return}
+    onlineGame={game_code:data.game_code,role:'maker',player1_name:data.player1_name,player2_name:null,status:'waiting'};
+    showTab('online',3);
+    showOnlineLobby();
+  }).catch(()=>alert('Nelze připojit k serveru. Zkontroluj API.'));
 }
 function joinOnlineGame(){
   const code=document.getElementById('onlineCode').value.trim().toUpperCase();
   const name=document.getElementById('n1').value.trim()||'Hráč 2';
   if(!code||code.length!==6){alert('Zadej 6místný kód hry.');return}
-  fetch(API_BASE+'/join_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:code,player2_name:name})})
-    .then(r=>r.json()).then(data=>{
+  apiJoinGame(code,name).then(data=>{
       if(!data.ok){alert(data.error||'Chyba');return}
       onlineGame={game_code:data.game_code,role:'breaker',player1_name:data.player1_name,player2_name:data.player2_name,status:data.status};
       showTab('online',3);
@@ -640,12 +649,11 @@ function confirmOnlineSecret(){
   if(!window._onlineSecretConfirm){confirmSecret();return}
   window._onlineSecretConfirm=false;
   document.getElementById('secOvl').classList.remove('show');
-  fetch(API_BASE+'/set_secret.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:onlineGame.game_code,secret:s2p})})
-    .then(r=>r.json()).then(data=>{if(data.ok){onlineGame.status='secret_entered';showOnlineLobby();onlinePollId=setInterval(pollOnlineGame,2000)}}).catch(()=>{});
+  apiSetSecret(onlineGame.game_code,s2p).then(data=>{if(data&&data.ok){onlineGame.status='secret_entered';showOnlineLobby();onlinePollId=setInterval(pollOnlineGame,2000)}}).catch(()=>{});
 }
 function pollOnlineGame(){
   if(!onlineGame)return
-  fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(onlineGame.game_code)).then(r=>r.json()).then(data=>{
+  apiGetGame(onlineGame.game_code).then(data=>{
     if(!data.ok)return
     onlineGame.status=data.status;
     if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
@@ -656,7 +664,7 @@ function pollOnlineGame(){
 }
 function startOnlineGame(){
   if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}
-  fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(onlineGame.game_code)).then(r=>r.json()).then(data=>{
+  apiGetGame(onlineGame.game_code).then(data=>{
     if(!data.ok)return
     G.mode='online';
     G.hist=data.history||[];
@@ -673,8 +681,7 @@ function startOnlineGame(){
 }
 function submitOnlineGuess(){
   if(!onlineGame||G.guess.includes(null))return
-  fetch(API_BASE+'/submit_guess.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:onlineGame.game_code,guess:G.guess})})
-    .then(r=>r.json()).then(data=>{
+  apiSubmitGuess(onlineGame.game_code,G.guess).then(data=>{
       if(!data.ok){alert(data.error||'Chyba');return}
       G.hist=data.history||[];
       G.guess=[null,null,null,null];selectedSlot=null;
