@@ -67,12 +67,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .bSub{background:var(--btn);color:#fff}
 .bSub:hover{background:var(--btnH)}
 .bSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
+#subBtn{display:none}
 .bClr{background:var(--card2);color:var(--text2)}
 .colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
 .colorPop.show{display:block;animation:mIn .15s ease}
 .colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
 .colorPop .cpColors{display:flex;gap:6px;flex-wrap:nowrap;justify-content:center;margin-bottom:10px}
 .colorPop .peg{width:36px;height:36px}
+.colorPop .peg.sel{box-shadow:var(--sel);transform:scale(1.1)}
 .colorPop .cpSub{width:100%;padding:9px;border:none;border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
 .colorPop .cpSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
@@ -92,6 +94,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .modal h2.win{color:var(--win)}
 .modal h2.lose{color:var(--lose)}
 .modal p{color:var(--text2);font-size:.84em;margin-bottom:16px}
+.waitingBreaker{display:flex!important;align-items:center;justify-content:center;gap:8px;padding:14px;margin:10px 0;background:var(--card2);border-radius:10px;border:1px solid var(--acc);color:var(--acc);font-weight:600;font-size:.9em}
+.waitingDots{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);animation:waitPulse 1s ease-in-out infinite}
+@keyframes waitPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.2)}}
 .modal .btnRow{flex-direction:column;gap:7px}
 .modal .btnRow button{padding:9px;border-radius:9px;border:none;font-size:.88em;font-weight:700;cursor:pointer}
 .modal .btnRow .pri{background:var(--btn);color:#fff}
@@ -179,6 +184,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     </div>
     <div id="onlineLobby" class="sr" style="display:none;margin-top:16px;padding:14px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
       <div class="ginfo" id="onlineLobbyMsg" style="margin-bottom:8px"></div>
+      <div id="onlineWaitingBreaker" class="waitingBreaker" style="display:none"><span class="waitingDots"></span> Čekám na zadání kódu od protihráče…</div>
       <div class="ginfo" id="onlineGameCode" style="font-size:1.2em;font-weight:800;margin:8px 0;letter-spacing:.1em"></div>
       <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none;margin-bottom:10px">📋 Kopírovat odkaz</button>
       <button class="startBtn" id="btnEnterSecret" onclick="showOnlineSecretModal()" style="display:none">🔐 Zadat tajný kód (4 barvy)</button>
@@ -238,6 +244,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="modal">
     <button class="mClose" onclick="hideEndModal()" title="Zavřít (ESC)">✕</button>
     <h2 id="endTitle"></h2><p id="endMsg"></p>
+    <div id="endSecReveal" class="secRevealFinal" style="display:none;margin:10px 0"><div class="secRevealLbl">🔓 Tajný kód byl:</div><div id="endSecPegs" class="secPegsFinal"></div></div>
     <div class="btnRow"><button class="pri" id="btnAgain" onclick="playAgain()">Hrát znovu</button><button class="sec2" id="btnBack" onclick="goBack()">← Zpět do menu</button></div>
   </div>
 </div>
@@ -256,10 +263,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.2.2</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.3.0</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:2,patch:2};
+const VERSION={major:2,minor:3,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
@@ -430,9 +437,37 @@ function showColorPop(evt){
   if(top+180>window.innerHeight){top=rect.top-180}
   pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
   document.getElementById('cpSubBtn').disabled=G.guess.includes(null);
-  pop.classList.add('show');
+  popColorIndex=0;pop.classList.add('show');highlightPopColor();
 }
 function hideColorPop(){document.getElementById('colorPop').classList.remove('show')}
+let popColorIndex=0;
+function showColorPopForKeyboard(){
+  const pop=document.getElementById('colorPop');
+  const colors=document.getElementById('cpColors');
+  colors.innerHTML='';
+  for(let i=0;i<G.colC;i++){
+    const d=document.createElement('div');d.className='peg';d.style.background=C[i].h;
+    d.onclick=(()=>{const id=i;return(e)=>{e.stopPropagation();pickColorPop(id)}})();
+    colors.appendChild(d);
+  }
+  const curRow=document.querySelector('.grow.cur');
+  if(!curRow){pop.classList.add('show');return}
+  const rect=curRow.getBoundingClientRect();
+  const popW=Math.min(G.colC*52+24,300);
+  let left=rect.left+(rect.width-popW)/2;
+  let top=rect.bottom+6;
+  if(left<8)left=8;
+  if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8;
+  if(top+180>window.innerHeight)top=rect.top-180;
+  pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
+  document.getElementById('cpSubBtn').disabled=G.guess.includes(null);
+  popColorIndex=0;pop.classList.add('show');highlightPopColor();
+}
+function highlightPopColor(){
+  const colors=document.getElementById('cpColors');
+  if(!colors)return;
+  [...colors.children].forEach((el,i)=>{el.classList.toggle('sel',i===popColorIndex)});
+}
 function pickColorPop(id){
   if(G.over||selectedSlot===null)return;
   G.guess[selectedSlot]=id;playSnd('peg');
@@ -451,7 +486,7 @@ function submitFromPop(){
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
   const lbl=document.getElementById('gameModeLabel');
-  if(G.mode==='online'&&onlineGame&&G.codeMaker){lbl.innerHTML='Hádáš proti: <strong>'+G.codeMaker+'</strong> · Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>'}else{lbl.innerHTML='Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>';document.getElementById('attNum').textContent=G.hist.length+1;document.getElementById('attMax').textContent=G.maxA}
+  if(G.mode==='online'&&onlineGame&&G.codeMaker){lbl.innerHTML='🌐 Hádáš proti: <strong>'+G.codeMaker+'</strong> · Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>'}else{lbl.innerHTML='Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>';document.getElementById('attNum').textContent=G.hist.length+1;document.getElementById('attMax').textContent=G.maxA}
   for(let i=0;i<G.hist.length;i++){
     const h=G.hist[i];const row=document.createElement('div');row.className='grow done';
     let html='<div class="rn">'+(i+1)+'</div>';
@@ -518,17 +553,24 @@ function revealSecret(){
 function showEnd(won,timeout){
   const t=document.getElementById('endTitle');const m=document.getElementById('endMsg');
   const guesser=G.mode==='2p'?G.codeBreaker:G.n1;
-  const elapsed=Math.floor((Date.now()-G.startTime)/1000);
-  const timeStr=' ('+formatTime(elapsed)+')';
+  const elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;
+  const timeStr=elapsed>0?' (čas '+formatTime(elapsed)+')':'';
   if(won){t.className='win';t.textContent='🎉 Výhra!';m.textContent=guesser+' uhodl kód za '+G.hist.length+' pokus'+(G.hist.length===1?'':'ů')+timeStr+'!';playSnd('win')}
   else{t.className='lose';t.textContent='😞 Prohra';m.textContent=timeout?'Vypršel čas!':'Tajný kód nebyl uhoden za '+G.maxA+' pokusů.';if(!timeout)m.textContent+=timeStr;playSnd('lose')}
+  const endSec=document.getElementById('endSecReveal');const endPegs=document.getElementById('endSecPegs');
+  if(G.secret&&G.secret.length===4){endSec.style.display='flex';endPegs.innerHTML='';G.secret.forEach(id=>{const d=document.createElement('div');d.className='peg';d.style.background=C[id].h;endPegs.appendChild(d)})}else{endSec.style.display='none'}
   endModalBtn=0;updateEndModalBtns();
+  document.getElementById('btnAgain').textContent=onlineGame?'Zpět do lobby':'Hrát znovu';
   document.getElementById('endOvl').classList.add('show');
 }
-function hideEndModal(){document.getElementById('endOvl').classList.remove('show')}
+function hideEndModal(){document.getElementById('endOvl').classList.remove('show');document.getElementById('btnAgain').textContent='Hrát znovu'}
 function updateEndModalBtns(){document.getElementById('btnAgain').classList.toggle('sel',endModalBtn===0);document.getElementById('btnBack').classList.toggle('sel',endModalBtn===1)}
-function playAgain(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();startGame(G.mode==='2p')}
-function goBack(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();showTab('setup',0)}
+function playAgain(){
+  document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();
+  if(onlineGame){showTab('online',3);showOnlineLobby();return}
+  startGame(G.mode==='2p');
+}
+function goBack(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();if(onlineGame)onlineGame=null;showTab('setup',0)}
 
 function addStat(won){
   const elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;
@@ -648,13 +690,21 @@ function showOnlineLobby(){
   document.getElementById('onlineLobby').style.display='block';
   document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
+  document.getElementById('onlineWaitingBreaker').style.display='none';
+  if(onlineGame.status==='won'||onlineGame.status==='lost'){document.getElementById('onlineLobbyMsg').textContent='Hra skončila. Vytvoř novou hru nebo se připoj k jiné.';document.getElementById('btnEnterSecret').style.display='none';return}
   if(onlineGame.role==='maker'){
     if(onlineGame.status==='waiting'){
       const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil – zadej mu hádanku (tajný kód):':'Sdílej odkaz. Až se někdo připojí, zadej tajný kód.';
       document.getElementById('onlineLobbyMsg').textContent=who;
       const btn=document.getElementById('btnEnterSecret');btn.style.display='block';btn.textContent=onlineGame.player2_name?'🔐 Zadat hádanku pro '+onlineGame.player2_name:'🔐 Zadat tajný kód (4 barvy)';
     }else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající '+(onlineGame.player2_name||'')+' může hádat.';document.getElementById('btnEnterSecret').style.display='none'}
-  }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se, až tvůrce kódu zadá tajný kód. Stránka se obnoví sama.';document.getElementById('btnEnterSecret').style.display='none'}
+  }else{
+    document.getElementById('onlineLobbyMsg').textContent='Až tvůrce kódu zadá tajný kód, hra začne.';
+    document.getElementById('btnEnterSecret').style.display='none';
+    const w=document.getElementById('onlineWaitingBreaker');
+    w.style.display='flex';w.innerHTML='<span class="waitingDots"></span> Čekám na zadání kódu od <strong>'+(onlineGame.player1_name||'protihráče')+'</strong>…';
+  }
+  if(onlineGame.role!=='breaker'||onlineGame.status!=='waiting')document.getElementById('onlineWaitingBreaker').style.display='none';
 }
 function copyOnlineLink(){
   const url=location.origin+location.pathname+'?online=join&code='+onlineGame.game_code;
@@ -683,7 +733,7 @@ function pollOnlineGame(){
     if(!data.ok)return
     onlineGame.status=data.status;
     if(data.player2_name)onlineGame.player2_name=data.player2_name;
-    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
+    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(won),500);return}
     if(data.status==='secret_entered'&&onlineGame.role==='breaker'&&!onlineGame.breakerStarted){onlineGame.breakerStarted=true;startOnlineGame();return}
     if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker'){showTab('game',1);renderBoard();if(document.getElementById('palette'))renderPal()}else showOnlineLobby()}
     showOnlineLobby();
@@ -699,6 +749,7 @@ function startOnlineGame(){
     G.over=data.status==='won'||data.status==='lost';
     G.secret=[];G.guess=[null,null,null,null];selectedSlot=null;
     G.n1=data.player2_name;G.codeBreaker=data.player2_name;G.codeMaker=data.player1_name;
+    G.startTime=Date.now();
     document.getElementById('secReveal').style.display='none';
     showTab('game',1);
     renderBoard();
@@ -714,8 +765,8 @@ function submitOnlineGuess(){
       G.guess=[null,null,null,null];selectedSlot=null;
       document.getElementById('subBtn').disabled=true;
       playSnd('submit');
-      if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:false,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(true);onlineGame=null},500)}
-      else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:true,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(false);onlineGame=null},500)}
+      if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:false,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(true),500)}
+      else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:true,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(false),500)}
       else{renderBoard();renderPal()}
     }).catch(()=>alert('Chyba odeslání.'));
 }
@@ -743,11 +794,21 @@ document.addEventListener('keydown',function(e){
   if(!gameActive)return;
   if(G.over){if(e.key==='Escape'){e.preventDefault()}return}
   const k=e.key.toLowerCase();
-  if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();e.preventDefault();return}
-  if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();e.preventDefault();return}
+  const pop=document.getElementById('colorPop');
+  const popOpen=pop.classList.contains('show');
+  if(popOpen){
+    if(k==='arrowleft'||k==='arrowup'){popColorIndex=(popColorIndex-1+G.colC)%G.colC;highlightPopColor();e.preventDefault();return}
+    if(k==='arrowright'||k==='arrowdown'){popColorIndex=(popColorIndex+1)%G.colC;highlightPopColor();e.preventDefault();return}
+    if(k==='enter'&&!e.ctrlKey){pickColor(popColorIndex);e.preventDefault();return}
+    if(k==='enter'&&e.ctrlKey){if(!G.guess.includes(null)){hideColorPop();submitGuess()}e.preventDefault();return}
+    if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault();return}
+  }
+  if(k==='enter'&&e.ctrlKey){if(!G.guess.includes(null))submitGuess();e.preventDefault();return}
+  if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
+  if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
   if(k==='q'||k==='w'||k==='e'||k==='r'){const idx={'q':0,'w':1,'e':2,'r':3}[k];selectOrSetPeg(idx);e.preventDefault();return}
-  if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
-  if(k==='enter'){submitGuess();e.preventDefault();return}
+  if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);if(!popOpen)showColorPopForKeyboard();e.preventDefault()};return}
+  if(k==='enter'){if(!G.guess.includes(null))submitGuess();e.preventDefault();return}
   if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
   if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault()}
 });
