@@ -7,8 +7,8 @@
 <script>try{var t=localStorage.getItem('logik_theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#fdf6ec;--card:#fff8f0;--card2:#fff0e0;--text:#3b2a1a;--text2:#6b5a45;--border:#e8d8c4;--btn:#c97b4a;--btnH:#b86d3e;--acc:#c97b4a;--sh:0 4px 18px rgba(0,0,0,.08);--cell:#fff3e8;--cellB:#dcc8ad;--hdr:linear-gradient(135deg,#f9c074,#f0a05a);--inp:#fff;--ovl:rgba(59,42,26,.55);--mod:#fff8f0;--sel:0 0 0 3px #c97b4a;--win:#4caf50;--lose:#e57373}
-:root[data-theme=dark],body[data-theme=dark]{--bg:#1a1210;--card:#2a2220;--card2:#322a22;--text:#f0e6d8;--text2:#b8a890;--border:#3f3530;--btn:#c97b4a;--btnH:#b86d3e;--acc:#e8a87c;--sh:0 4px 18px rgba(0,0,0,.35);--cell:#322a22;--cellB:#4a403a;--hdr:linear-gradient(135deg,#3a2a1a,#2a1e10);--inp:#2a2220;--ovl:rgba(0,0,0,.6);--mod:#2a2220;--sel:0 0 0 3px #e8a87c;--win:#66bb6a;--lose:#ef5350}
+:root{--bg:#fdf6ec;--card:#fff8f0;--card2:#fff0e0;--text:#3b2a1a;--text2:#6b5a45;--border:#e8d8c4;--btn:#c97b4a;--btnH:#b86d3e;--acc:#c97b4a;--btnJoin:#4a9b6e;--btnJoinH:#3d855d;--sh:0 4px 18px rgba(0,0,0,.08);--cell:#fff3e8;--cellB:#dcc8ad;--hdr:linear-gradient(135deg,#f9c074,#f0a05a);--inp:#fff;--ovl:rgba(59,42,26,.55);--mod:#fff8f0;--sel:0 0 0 3px #c97b4a;--win:#4caf50;--lose:#e57373}
+:root[data-theme=dark],body[data-theme=dark]{--bg:#1a1210;--card:#2a2220;--card2:#322a22;--text:#f0e6d8;--text2:#b8a890;--border:#3f3530;--btn:#c97b4a;--btnH:#b86d3e;--acc:#e8a87c;--btnJoin:#5aab7e;--btnJoinH:#4d966e;--sh:0 4px 18px rgba(0,0,0,.35);--cell:#322a22;--cellB:#4a403a;--hdr:linear-gradient(135deg,#3a2a1a,#2a1e10);--inp:#2a2220;--ovl:rgba(0,0,0,.6);--mod:#2a2220;--sel:0 0 0 3px #e8a87c;--win:#66bb6a;--lose:#ef5350}
 body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
 .hdr{background:var(--hdr);padding:16px 20px 12px;text-align:center;position:relative;box-shadow:var(--sh)}
 .hdr h1{font-size:1.6em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.2)}
@@ -33,6 +33,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .startBtn{width:100%;padding:11px;border:none;border-radius:10px;background:var(--btn);color:#fff;font-size:.95em;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
 .startBtn:hover{background:var(--btnH)}
 .startBtn:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
+.startBtn.onlineCreate{background:var(--btn);color:#fff}
+.startBtn.onlineCreate:hover{background:var(--btnH)}
+.startBtn.onlineJoin{background:var(--btnJoin);color:#fff}
+.startBtn.onlineJoin:hover{background:var(--btnJoinH)}
 .ghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .ginfo{font-size:.8em;color:var(--text2)}
 .ginfo span{font-weight:700;color:var(--acc)}
@@ -68,6 +72,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .bSub:hover{background:var(--btnH)}
 .bSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 #subBtn{display:none}
+.abts .bClr{display:none}
 .bClr{background:var(--card2);color:var(--text2)}
 .colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
 .colorPop.show{display:block;animation:mIn .15s ease}
@@ -176,11 +181,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <h2>🌐 Hra přes internet</h2>
     <p class="ginfo" style="margin-bottom:12px;font-size:.85em">Dva režimy: <strong>Tvůrce kódu</strong> (zadá tajný kód) a <strong>Hádající</strong> (ho uhodne).</p>
     <div class="sr"><label>Chci být tvůrce kódu</label>
-      <button class="startBtn" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
+      <button class="startBtn onlineCreate" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
     </div>
     <div class="sr" style="margin-top:16px"><label>Chci být hádající – mám kód od kamaráda</label>
       <input type="text" id="onlineCode" placeholder="6 písmen (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
-      <button class="startBtn" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se k hře</button>
+      <button class="startBtn onlineJoin" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se k hře</button>
     </div>
     <div id="onlineLobby" class="sr" style="display:none;margin-top:16px;padding:14px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
       <div class="ginfo" id="onlineLobbyMsg" style="margin-bottom:8px"></div>
@@ -245,7 +250,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="mClose" onclick="hideEndModal()" title="Zavřít (ESC)">✕</button>
     <h2 id="endTitle"></h2><p id="endMsg"></p>
     <div id="endSecReveal" class="secRevealFinal" style="display:none;margin:10px 0"><div class="secRevealLbl">🔓 Tajný kód byl:</div><div id="endSecPegs" class="secPegsFinal"></div></div>
-    <div class="btnRow"><button class="pri" id="btnAgain" onclick="playAgain()">Hrát znovu</button><button class="sec2" id="btnBack" onclick="goBack()">← Zpět do menu</button></div>
+    <div class="btnRow"><button class="pri" id="btnAgain" onclick="playAgain()">Hrát znovu</button><button class="sec2" id="btnBack" onclick="goBack()">← Zpět do hry</button></div>
   </div>
 </div>
 <div class="ovl" id="secOvl">
@@ -263,10 +268,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.3.0</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.3.1</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:3,patch:0};
+const VERSION={major:2,minor:3,patch:1};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
@@ -563,14 +568,14 @@ function showEnd(won,timeout){
   document.getElementById('btnAgain').textContent=onlineGame?'Zpět do lobby':'Hrát znovu';
   document.getElementById('endOvl').classList.add('show');
 }
-function hideEndModal(){document.getElementById('endOvl').classList.remove('show');document.getElementById('btnAgain').textContent='Hrát znovu'}
+function hideEndModal(){document.getElementById('endOvl').classList.remove('show');document.getElementById('btnAgain').textContent='Hrát znovu';document.getElementById('btnBack').textContent='← Zpět do hry'}
 function updateEndModalBtns(){document.getElementById('btnAgain').classList.toggle('sel',endModalBtn===0);document.getElementById('btnBack').classList.toggle('sel',endModalBtn===1)}
 function playAgain(){
   document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();
   if(onlineGame){showTab('online',3);showOnlineLobby();return}
   startGame(G.mode==='2p');
 }
-function goBack(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();if(onlineGame)onlineGame=null;showTab('setup',0)}
+function goBack(){document.getElementById('endOvl').classList.remove('show');showTab('game',1)}
 
 function addStat(won){
   const elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;
@@ -807,7 +812,7 @@ document.addEventListener('keydown',function(e){
   if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
   if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
   if(k==='q'||k==='w'||k==='e'||k==='r'){const idx={'q':0,'w':1,'e':2,'r':3}[k];selectOrSetPeg(idx);e.preventDefault();return}
-  if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);if(!popOpen)showColorPopForKeyboard();e.preventDefault()};return}
+  if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColorPop(id);popColorIndex=id;if(!popOpen)showColorPopForKeyboard();else highlightPopColor();e.preventDefault()};return}
   if(k==='enter'){if(!G.guess.includes(null))submitGuess();e.preventDefault();return}
   if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
   if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault()}
