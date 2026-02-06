@@ -636,8 +636,11 @@ function showOnlineLobby(){
   document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
   if(onlineGame.role==='maker'){
-    if(onlineGame.status==='waiting'){document.getElementById('onlineLobbyMsg').textContent='Krok 1: Sdílej odkaz. Krok 2: Zadej tajný kód (tlačítko níže).';document.getElementById('btnEnterSecret').style.display='block'}
-    else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající se může připojit a hádat.';document.getElementById('btnEnterSecret').style.display='none'}
+    if(onlineGame.status==='waiting'){
+      const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil! Zadej tajný kód (tlačítko níže).':'Krok 1: Sdílej odkaz. Krok 2: Zadej tajný kód (tlačítko níže).';
+      document.getElementById('onlineLobbyMsg').textContent=who;
+      document.getElementById('btnEnterSecret').style.display='block';
+    }else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající se může připojit a hádat.';document.getElementById('btnEnterSecret').style.display='none'}
   }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se, až tvůrce kódu zadá tajný kód. Stránka se obnoví sama.';document.getElementById('btnEnterSecret').style.display='none'}
 }
 function copyOnlineLink(){
@@ -666,6 +669,7 @@ function pollOnlineGame(){
   apiGetGame(onlineGame.game_code).then(data=>{
     if(!data.ok)return
     onlineGame.status=data.status;
+    if(data.player2_name)onlineGame.player2_name=data.player2_name;
     if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
     if(data.status==='secret_entered'&&onlineGame.role==='breaker'){startOnlineGame();return}
     if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker')showTab('game',1);renderBoard();renderPal()}
