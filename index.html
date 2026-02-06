@@ -164,19 +164,19 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div class="pg" id="pg-online">
   <div class="card">
     <h2>🌐 Hra přes internet</h2>
-    <div class="sr"><label>Vytvořit novou hru</label>
-      <p class="ginfo" style="margin-bottom:6px">Ty zadáš tajný kód, druhý hráč se připojí a bude hádat.</p>
+    <p class="ginfo" style="margin-bottom:12px;font-size:.85em">Dva režimy: <strong>Tvůrce kódu</strong> (zadá tajný kód) a <strong>Hádající</strong> (ho uhodne).</p>
+    <div class="sr"><label>Chci být tvůrce kódu</label>
       <button class="startBtn" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
     </div>
-    <div class="sr" style="margin-top:16px"><label>Připojit se k hře</label>
-      <input type="text" id="onlineCode" placeholder="6místný kód (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
-      <button class="startBtn" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se</button>
+    <div class="sr" style="margin-top:16px"><label>Chci být hádající – mám kód od kamaráda</label>
+      <input type="text" id="onlineCode" placeholder="6 písmen (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
+      <button class="startBtn" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se k hře</button>
     </div>
-    <div id="onlineLobby" class="sr" style="display:none;margin-top:12px;padding:10px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
-      <div class="ginfo" id="onlineLobbyMsg"></div>
-      <div class="ginfo" id="onlineGameCode" style="font-size:1.1em;font-weight:800;margin:8px 0"></div>
-      <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none">Kopírovat odkaz</button>
-      <button class="startBtn" id="btnEnterSecret" onclick="showOnlineSecretModal()" style="display:none;margin-top:8px">Zadat tajný kód</button>
+    <div id="onlineLobby" class="sr" style="display:none;margin-top:16px;padding:14px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
+      <div class="ginfo" id="onlineLobbyMsg" style="margin-bottom:8px"></div>
+      <div class="ginfo" id="onlineGameCode" style="font-size:1.2em;font-weight:800;margin:8px 0;letter-spacing:.1em"></div>
+      <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none;margin-bottom:10px">📋 Kopírovat odkaz</button>
+      <button class="startBtn" id="btnEnterSecret" onclick="showOnlineSecretModal()" style="display:none">🔐 Zadat tajný kód (4 barvy)</button>
     </div>
   </div>
 </div>
@@ -199,6 +199,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div class="pg" id="pg-stats">
   <div class="card">
     <h2>📊 Statistiky</h2>
+    <p class="ginfo" style="font-size:.78em;margin-bottom:10px">U online her se zobrazují výsledky obou rolí (tvůrce kódu i hádající). Ve filtru „Hráči“ zadej stejné jméno, pod kterým jsi hrál.</p>
     <div class="sTabs">
       <button class="sTab act" id="stab0" onclick="showStatTab(0)">Přehled</button>
       <button class="sTab" id="stab1" onclick="showStatTab(1)">Hráči</button>
@@ -245,10 +246,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.1.1</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.2.0</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:1,patch:1};
+const VERSION={major:2,minor:2,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
@@ -554,7 +555,8 @@ function renderStatsUI(){
   [...stats].reverse().forEach(s=>{
     const d=document.createElement('div');d.className='sItem';
     const timeStr=s.time?formatTime(s.time):'–';
-    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pok. · '+timeStr+' · '+(s.diff||'')+' · '+s.date+'</span>';
+    const modeLabel=s.mode==='online'?' · online':'';
+    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pok. · '+timeStr+(s.diff?' · '+s.diff:'')+modeLabel+' · '+s.date+'</span>';
     el.appendChild(d);
   });
   if(document.getElementById('playerSel')){populatePlayerSel()}
@@ -634,9 +636,9 @@ function showOnlineLobby(){
   document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
   if(onlineGame.role==='maker'){
-    if(onlineGame.status==='waiting'){document.getElementById('onlineLobbyMsg').textContent='Sdílej kód nebo odkaz druhému hráči. Pak zadej tajný kód.';document.getElementById('btnEnterSecret').style.display='block'}
-    else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Čeká se na druhého hráče nebo už hádá.';document.getElementById('btnEnterSecret').style.display='none'}
-  }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se na zadání kódu od vytvořitele.';document.getElementById('btnEnterSecret').style.display='none'}
+    if(onlineGame.status==='waiting'){document.getElementById('onlineLobbyMsg').textContent='Krok 1: Sdílej odkaz. Krok 2: Zadej tajný kód (tlačítko níže).';document.getElementById('btnEnterSecret').style.display='block'}
+    else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající se může připojit a hádat.';document.getElementById('btnEnterSecret').style.display='none'}
+  }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se, až tvůrce kódu zadá tajný kód. Stránka se obnoví sama.';document.getElementById('btnEnterSecret').style.display='none'}
 }
 function copyOnlineLink(){
   const url=location.origin+location.pathname+'?online=join&code='+onlineGame.game_code;
@@ -645,8 +647,8 @@ function copyOnlineLink(){
 function showOnlineSecretModal(){
   G.colC=6;
   s2p=[null,null,null,null];
-  document.getElementById('secTitle').textContent='Zadej tajný kód (online)';
-  document.getElementById('secDesc').textContent='Druhý hráč bude hádat. Vyber 4 kolíky.';
+  document.getElementById('secTitle').textContent='Tvůrce kódu – zadej tajný kód';
+  document.getElementById('secDesc').textContent='Vyber 4 barvy. Hádající je pak bude uhodnout.';
   const el=document.getElementById('secPal');el.innerHTML='';
   for(let i=0;i<6;i++){const d=document.createElement('div');d.className='peg';d.style.background=C[i].h;d.style.width='38px';d.style.height='38px';d.onclick=(()=>{const id=i;return()=>pickS(id)})();el.appendChild(d)}
   renderSecDisp();
@@ -664,7 +666,7 @@ function pollOnlineGame(){
   apiGetGame(onlineGame.game_code).then(data=>{
     if(!data.ok)return
     onlineGame.status=data.status;
-    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
+    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
     if(data.status==='secret_entered'&&onlineGame.role==='breaker'){startOnlineGame();return}
     if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker')showTab('game',1);renderBoard();renderPal()}
     showOnlineLobby();
@@ -695,8 +697,8 @@ function submitOnlineGuess(){
       G.guess=[null,null,null,null];selectedSlot=null;
       document.getElementById('subBtn').disabled=true;
       playSnd('submit');
-      if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);setTimeout(()=>{showEnd(true);onlineGame=null},500)}
-      else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);setTimeout(()=>{showEnd(false);onlineGame=null},500)}
+      if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:false,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(true);onlineGame=null},500)}
+      else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:true,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(false);onlineGame=null},500)}
       else{renderBoard();renderPal()}
     }).catch(()=>alert('Chyba odeslání.'));
 }
