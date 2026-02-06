@@ -182,13 +182,16 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="card">
     <h2>🌐 Hra přes internet</h2>
     <p class="ginfo" style="margin-bottom:12px;font-size:.85em">Dva režimy: <strong>Tvůrce kódu</strong> (zadá tajný kód) a <strong>Hádající</strong> (ho uhodne).</p>
-    <div class="sr"><label>Chci být tvůrce kódu</label>
-      <button class="startBtn onlineCreate" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
+    <div id="onlineEntry">
+      <div class="sr"><label>Chci být tvůrce kódu</label>
+        <button class="startBtn onlineCreate" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
+      </div>
+      <div class="sr" style="margin-top:16px"><label>Chci být hádající – mám kód od kamaráda</label>
+        <input type="text" id="onlineCode" placeholder="6 písmen (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
+        <button class="startBtn onlineJoin" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se k hře</button>
+      </div>
     </div>
-    <div class="sr" style="margin-top:16px"><label>Chci být hádající – mám kód od kamaráda</label>
-      <input type="text" id="onlineCode" placeholder="6 písmen (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
-      <button class="startBtn onlineJoin" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se k hře</button>
-    </div>
+    <div id="onlineGamesList" class="sr" style="display:none;margin-top:12px;padding:10px;background:var(--card2);border-radius:10px;border:1px solid var(--border)"></div>
     <div id="onlineLobby" class="sr" style="display:none;margin-top:16px;padding:14px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
       <div class="ginfo" id="onlineLobbyMsg" style="margin-bottom:8px"></div>
       <div id="onlineMakerAction" class="makerAction" style="display:none"><span class="blinkIcon">🔔</span> Na tebe se čeká – zadej tajný kód</div>
@@ -196,13 +199,16 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="ginfo" id="onlineGameCode" style="font-size:1.2em;font-weight:800;margin:8px 0;letter-spacing:.1em"></div>
       <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none;margin-bottom:10px">📋 Kopírovat odkaz</button>
       <button class="startBtn" id="btnEnterSecret" onclick="showOnlineSecretModal()" style="display:none">🔐 Zadat tajný kód (4 barvy)</button>
+      <button class="bbtn" id="btnViewAsMaker" onclick="viewMakerBoard()" style="display:none;margin-top:8px">👁 Zobrazit průběh hry</button>
+      <button class="bbtn" id="btnEndGame" onclick="endOnlineGame()" style="display:none;margin-top:4px;color:var(--lose)">✕ Ukončit hru (vyhodit protihráče)</button>
+      <button class="bbtn" id="btnLeaveGame" onclick="leaveOnlineGame()" style="margin-top:8px">← Opustit tuto hru</button>
     </div>
   </div>
 </div>
 <div class="pg" id="pg-game">
   <div class="ghdr">
     <div class="ginfo"><span id="gameModeLabel">Pokus <span id="attNum">1</span> / <span id="attMax">10</span></span></div>
-    <button class="bbtn" onclick="showTab('setup',0)">← Zpět</button>
+    <button class="bbtn" id="btnBackFromGame" onclick="goBackFromGame()">← Zpět</button>
   </div>
   <div class="timer" id="timerRow" style="display:none">⏱️ <span id="timerDisp">0:00</span></div>
   <div id="secReveal" class="secRow secRevealFinal" style="display:none">
@@ -271,10 +277,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.3.3</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.4.0</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:3,patch:3};
+const VERSION={major:2,minor:4,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
@@ -289,6 +295,7 @@ async function apiJoinGame(game_code,player2_name){if(useSupabase()){const r=awa
 async function apiGetGame(game_code){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code));const rows=await r.json();if(!rows||rows.length===0)return{ok:false};const row=rows[0];return{ok:true,game_id:row.id,game_code:row.game_code,player1_name:row.player1_name,player2_name:row.player2_name,secret:row.secret,status:row.status,history:row.history||[],max_attempts:row.max_attempts||10,updated_at:row.updated_at}}const r=await fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(game_code));return r.json()}
 async function apiSetSecret(game_code,secret){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code),{method:'PATCH',body:JSON.stringify({secret,status:'secret_entered'})});return{ok:r.ok}}const r=await fetch(API_BASE+'/set_secret.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code,secret})});return r.json()}
 async function apiSubmitGuess(game_code,guess){if(useSupabase()){const data=await apiGetGame(game_code);if(!data.ok||!data.secret)return{ok:false};const history=(data.history||[]).slice();const fb=calcFB(data.secret,guess);history.push({guess:[...guess],fb});let status=data.status==='secret_entered'?'playing':data.status;if(fb.b===4)status='won';else if(history.length>=data.max_attempts)status='lost';const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code),{method:'PATCH',body:JSON.stringify({history,status})});if(!r.ok)return{ok:false};return{ok:true,feedback:fb,history,status,won:status==='won',lost:status==='lost',secret:status==='won'||status==='lost'?data.secret:undefined}}const r=await fetch(API_BASE+'/submit_guess.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code,guess})});return r.json()}
+async function apiCancelGame(game_code){if(useSupabase()){const r=await supabaseReq('/games?game_code=eq.'+encodeURIComponent(game_code),{method:'PATCH',body:JSON.stringify({status:'cancelled'})});return{ok:r.ok}}return fetch(API_BASE+'/cancel_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code})}).then(r=>r.json())}
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
 let onlinePollId=null;
@@ -313,7 +320,7 @@ let selectedSlot=null;
 let timerInterval=null;
 let endModalBtn=0;
 
-const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme',game:'logik_game'};
+const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme',game:'logik_game',onlineCurrent:'logik_online_current',onlineGames:'logik_online_games'};
 const DIFF_DESC={easy:'6 barev · bez opakování · 12 pokusů',medium:'6 barev · s opakováním · 10 pokusů',hard:'8 barev · s opakováním · 8 pokusů'};
 const DIFF_DESC_2P={easy:'6 barev · 12 pokusů',medium:'6 barev · 10 pokusů',hard:'8 barev · 8 pokusů'};
 function loadStats(){try{const d=localStorage.getItem(STORAGE_KEYS.stats);if(d){stats=JSON.parse(d)}}catch(e){stats=[]}}
@@ -494,7 +501,9 @@ function submitFromPop(){
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
   const lbl=document.getElementById('gameModeLabel');
-  if(G.mode==='online'&&onlineGame&&G.codeMaker){lbl.innerHTML='🌐 Hádáš proti: <strong>'+G.codeMaker+'</strong> · Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>'}else{lbl.innerHTML='Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>';document.getElementById('attNum').textContent=G.hist.length+1;document.getElementById('attMax').textContent=G.maxA}
+  const isMakerView=G.mode==='online'&&onlineGame&&onlineGame.role==='maker';
+  const backBtn=document.getElementById('btnBackFromGame');if(backBtn)backBtn.textContent=isMakerView?'← Zpět do lobby':'← Zpět';
+  if(isMakerView){lbl.innerHTML='🌐 Průběh hry – hádá <strong>'+(G.codeBreaker||'protihráč')+'</strong> · '+G.hist.length+' / '+G.maxA+' pokusů'}else if(G.mode==='online'&&onlineGame&&G.codeMaker){lbl.innerHTML='🌐 Hádáš proti: <strong>'+G.codeMaker+'</strong> · Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>'}else{lbl.innerHTML='Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>';document.getElementById('attNum').textContent=G.hist.length+1;document.getElementById('attMax').textContent=G.maxA}
   for(let i=0;i<G.hist.length;i++){
     const h=G.hist[i];const row=document.createElement('div');row.className='grow done';
     let html='<div class="rn">'+(i+1)+'</div>';
@@ -506,7 +515,7 @@ function renderBoard(){
     for(let k=0;k<4-h.fb.b-h.fb.w;k++){const p=document.createElement('div');p.className='fbp';p.style.background='transparent';fb.appendChild(p)}
     row.appendChild(fb);el.appendChild(row);
   }
-  if(!G.over&&G.hist.length<G.maxA){
+  if(!G.over&&G.hist.length<G.maxA&&!isMakerView){
     const row=document.createElement('div');row.className='grow cur';
     let html='<div class="rn">'+(G.hist.length+1)+'</div>';
     row.innerHTML=html;
@@ -584,6 +593,7 @@ function addStat(won){
   const elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;
   const stat={name:G.n1,won,att:G.hist.length,time:elapsed,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')};
   if(G.mode==='2p'){stat.opponent=G.codeMaker;stat.breaker=G.codeBreaker;stat.maker=G.codeMaker}
+  if(onlineGame){stat.role=onlineGame.role}
   stats.push(stat);saveStats();
   if(useSupabase()||API_BASE){
     const mode=onlineGame?'online':G.mode;
@@ -618,7 +628,7 @@ function renderStatsUI(){
   [...list].reverse().forEach(s=>{
     const d=document.createElement('div');d.className='sItem';
     const timeStr=s.time?formatTime(s.time):'–';
-    const modeLabel=s.mode==='online'?' · online':'';
+    const modeLabel=s.mode==='online'?(' · online'+(s.role==='maker'?' · zadavatel':s.role==='breaker'?' · hádající':'')):'';
     d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pok. · '+timeStr+(s.diff?' · '+s.diff:'')+modeLabel+' · '+s.date+'</span>';
     el.appendChild(d);
   });
@@ -676,6 +686,7 @@ function createOnlineGame(){
   apiCreateGame(name).then(data=>{
     if(!data||!data.ok){alert(data&&data.error||'Chyba');return}
     onlineGame={game_code:data.game_code,role:'maker',player1_name:data.player1_name,player2_name:null,status:'waiting'};
+    saveOnlineGame();addToOnlineGamesList(onlineGame);
     showTab('online',3);
     showOnlineLobby();
   }).catch(()=>alert('Nelze připojit k serveru. Zkontroluj API.'));
@@ -687,20 +698,34 @@ function joinOnlineGame(){
   apiJoinGame(code,name).then(data=>{
       if(!data.ok){alert(data.error||'Chyba');return}
       onlineGame={game_code:data.game_code,role:'breaker',player1_name:data.player1_name,player2_name:data.player2_name,status:data.status};
+      saveOnlineGame();addToOnlineGamesList(onlineGame);
       showTab('online',3);
       showOnlineLobby();
       if(data.status==='secret_entered'||data.status==='playing')startOnlineGame();
       else onlinePollId=setInterval(pollOnlineGame,2000);
     }).catch(()=>alert('Nelze připojit k serveru.'));
 }
+function saveOnlineGame(){try{if(onlineGame)localStorage.setItem(STORAGE_KEYS.onlineCurrent,JSON.stringify(onlineGame));else localStorage.removeItem(STORAGE_KEYS.onlineCurrent)}catch(e){}}
+function loadOnlineGamesList(){try{const d=localStorage.getItem(STORAGE_KEYS.onlineGames);return d?JSON.parse(d):[]}catch(e){return []}}
+function addToOnlineGamesList(og){const list=loadOnlineGamesList();const i=list.findIndex(x=>x.game_code===og.game_code);if(i>=0)list[i]=og;else list.unshift(og);const active=list.filter(x=>x.status!=='won'&&x.status!=='lost'&&x.status!=='cancelled');try{localStorage.setItem(STORAGE_KEYS.onlineGames,JSON.stringify(active.slice(0,20)))}catch(e){}}
 function showOnlineLobby(){
-  if(!onlineGame){document.getElementById('onlineLobby').style.display='none';return}
-  document.getElementById('onlineLobby').style.display='block';
+  const entryEl=document.getElementById('onlineEntry');const lobbyEl=document.getElementById('onlineLobby');const listEl=document.getElementById('onlineGamesList');
+  if(!onlineGame){
+    const s=localStorage.getItem(STORAGE_KEYS.onlineCurrent);
+    if(s){try{const saved=JSON.parse(s);if(saved&&saved.game_code){onlineGame=saved;apiGetGame(saved.game_code).then(data=>{if(data&&data.ok){onlineGame.status=data.status;if(data.player2_name)onlineGame.player2_name=data.player2_name;saveOnlineGame();if((data.status==='secret_entered'||data.status==='playing')&&onlineGame.role==='maker')onlinePollId=setInterval(pollOnlineGame,2000);}else onlineGame=null;showOnlineLobby();});return}}catch(e){}}
+    entryEl.style.display='block';lobbyEl.style.display='none';listEl.style.display='none';renderOnlineGamesList();return;
+  }
+  const ended=onlineGame.status==='won'||onlineGame.status==='lost'||onlineGame.status==='cancelled';
+  entryEl.style.display=ended?'block':'none';
+  lobbyEl.style.display='block';
   document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
   document.getElementById('onlineWaitingBreaker').style.display='none';
   document.getElementById('onlineMakerAction').style.display='none';
+  document.getElementById('btnViewAsMaker').style.display=(onlineGame.role==='maker'&&(onlineGame.status==='secret_entered'||onlineGame.status==='playing'))?'block':'none';
+  document.getElementById('btnEndGame').style.display=(onlineGame.role==='maker'&&!ended)?'block':'none';
   if(onlineGame.status==='won'||onlineGame.status==='lost'){document.getElementById('onlineLobbyMsg').textContent='Hra skončila. Vytvoř novou hru nebo se připoj k jiné.';document.getElementById('btnEnterSecret').style.display='none';return}
+  if(onlineGame.status==='cancelled'){document.getElementById('onlineLobbyMsg').textContent='Hra byla ukončena.';document.getElementById('btnEnterSecret').style.display='none';return}
   if(onlineGame.role==='maker'){
     if(onlineGame.status==='waiting'){
       const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil – zadej mu hádanku (tajný kód):':'Sdílej odkaz. Až se někdo připojí, zadej tajný kód.';
@@ -715,7 +740,24 @@ function showOnlineLobby(){
     w.style.display='flex';w.innerHTML='<span class="waitingDots"></span> Čekám na zadání kódu od <strong>'+(onlineGame.player1_name||'protihráče')+'</strong>…';
   }
   if(onlineGame.role!=='breaker'||onlineGame.status!=='waiting')document.getElementById('onlineWaitingBreaker').style.display='none';
+  listEl.style.display='none';
+  saveOnlineGame();
 }
+function renderOnlineGamesList(){
+  const list=loadOnlineGamesList();const el=document.getElementById('onlineGamesList');
+  if(!list.length){el.style.display='none';return}
+  el.style.display='block';el.innerHTML='<div class="ginfo" style="margin-bottom:6px;font-weight:700">Aktivní hry (neukončené)</div>';
+  list.forEach(og=>{
+    const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin:4px 0;background:var(--cell);border-radius:8px;border:1px solid var(--border)';
+    const lbl=document.createElement('span');lbl.textContent=og.game_code+' – '+(og.role==='maker'?'tvůrce':'hádající')+(og.player2_name?(' vs '+og.player2_name):'');
+    const btn=document.createElement('button');btn.className='bbtn';btn.textContent='Otevřít';btn.onclick=()=>{onlineGame=og;saveOnlineGame();apiGetGame(og.game_code).then(data=>{if(data&&data.ok){onlineGame.status=data.status;if(data.player2_name)onlineGame.player2_name=data.player2_name;saveOnlineGame();showOnlineLobby();if(onlineGame.role==='breaker'&&(data.status==='secret_entered'||data.status==='playing'))startOnlineGame();else if(onlineGame.role==='maker'&&(data.status==='secret_entered'||data.status==='playing'))onlinePollId=setInterval(pollOnlineGame,2000)}else{onlineGame=null;showOnlineLobby()}})}
+    d.appendChild(lbl);d.appendChild(btn);el.appendChild(d);
+  });
+}
+function goBackFromGame(){if(G.mode==='online'&&onlineGame&&onlineGame.role==='maker'){showTab('online',3);showOnlineLobby()}else showTab('setup',0)}
+function leaveOnlineGame(){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}onlineGame=null;saveOnlineGame();showOnlineLobby()}
+function viewMakerBoard(){if(!onlineGame||onlineGame.role!=='maker')return;apiGetGame(onlineGame.game_code).then(data=>{if(!data||!data.ok)return;G.mode='online';G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=data.status==='won'||data.status==='lost';G.secret=data.status==='won'||data.status==='lost'?data.secret:[];G.n1=data.player2_name;G.codeBreaker=data.player2_name;G.codeMaker=data.player1_name;document.getElementById('secReveal').style.display='none';if(G.over&&G.secret&&G.secret.length)revealSecret();showTab('game',1);renderBoard()})}
+function endOnlineGame(){if(!onlineGame||onlineGame.role!=='maker')return;if(!confirm('Opravdu ukončit hru? Protihráč bude ze hry vyhozen.'))return;apiCancelGame(onlineGame.game_code).then(r=>{if(r&&r.ok){onlineGame.status='cancelled';addToOnlineGamesList(onlineGame);saveOnlineGame();showOnlineLobby()}else alert('Nepodařilo se ukončit hru.')})}
 function copyOnlineLink(){
   const url=location.origin+location.pathname+'?online=join&code='+onlineGame.game_code;
   navigator.clipboard.writeText(url).then(()=>alert('Odkaz zkopírován do schránky.')).catch(()=>prompt('Zkopíruj odkaz:',url));
@@ -743,9 +785,10 @@ function pollOnlineGame(){
     if(!data.ok)return
     onlineGame.status=data.status;
     if(data.player2_name)onlineGame.player2_name=data.player2_name;
-    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(won),500);return}
+    if(data.status==='cancelled'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}onlineGame.status='cancelled';addToOnlineGamesList(onlineGame);saveOnlineGame();if(onlineGame.role==='breaker')alert('Hra byla ukončena zadavatelem. Byl jsi ze hry vyhozen.');showOnlineLobby();return}
+    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}onlineGame.status=data.status;addToOnlineGamesList(onlineGame);G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';if(onlineGame.role==='breaker'){G.n1=data.player2_name;addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player2_name,won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{})}else{G.n1=data.player1_name;addStat(!won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{})}setTimeout(()=>showEnd(won),500);return}
     if(data.status==='secret_entered'&&onlineGame.role==='breaker'&&!onlineGame.breakerStarted){onlineGame.breakerStarted=true;startOnlineGame();return}
-    if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker'){showTab('game',1);renderBoard();if(document.getElementById('palette'))renderPal()}else showOnlineLobby()}
+    if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker'){showTab('game',1);renderBoard();if(document.getElementById('palette'))renderPal()}else{showOnlineLobby();saveOnlineGame()}}
     showOnlineLobby();
   }).catch(()=>{});
 }
