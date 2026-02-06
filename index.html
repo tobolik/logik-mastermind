@@ -542,7 +542,7 @@ function addStat(won){
 }
 
 let statTab=0;let statsFilter='all';
-function setStatsFilter(f){statsFilter=f;['statFAll','statFOff','statFOn'].forEach((id,i)=>{document.getElementById(id).classList.toggle('act',(f==='all'&&i===0)||(f==='offline'&&i===1)||(f==='online'&&i===2)});renderStatsUI()}
+function setStatsFilter(f){statsFilter=f;['statFAll','statFOff','statFOn'].forEach((id,i)=>{document.getElementById(id).classList.toggle('act',(f==='all'&&i===0)||(f==='offline'&&i===1)||(f==='online'&&i===2));});renderStatsUI()}
 function showStatTab(t){statTab=t;[0,1,2].forEach(i=>{document.getElementById('stab'+i).classList.toggle('act',i===t);document.getElementById('statView'+i).style.display=i===t?'block':'none'});if(t===1)renderPlayerStats();if(t===2)renderComparisonStats()}
 
 function renderStats(){
