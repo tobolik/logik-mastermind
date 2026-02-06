@@ -105,6 +105,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <button class="tab act" id="tab0" onclick="showTab('setup',0)">Nastavení</button>
   <button class="tab" id="tab1" onclick="showTab('game',1)">Hra</button>
   <button class="tab" id="tab2" onclick="showTab('stats',2)">Statistiky</button>
+  <button class="tab" id="tab3" onclick="showTab('online',3)">Online</button>
 </div>
 <div class="pg act" id="pg-setup">
   <div class="card">
@@ -123,9 +124,28 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" onclick="initAudio();startGame()">Začít hru ▶</button>
   </div>
 </div>
+<div class="pg" id="pg-online">
+  <div class="card">
+    <h2>🌐 Hra přes internet</h2>
+    <div class="sr"><label>Vytvořit novou hru</label>
+      <p class="ginfo" style="margin-bottom:6px">Ty zadáš tajný kód, druhý hráč se připojí a bude hádat.</p>
+      <button class="startBtn" id="btnCreateOnline" onclick="createOnlineGame()">Vytvořit hru</button>
+    </div>
+    <div class="sr" style="margin-top:16px"><label>Připojit se k hře</label>
+      <input type="text" id="onlineCode" placeholder="6místný kód (např. AB12CD)" maxlength="6" style="text-transform:uppercase">
+      <button class="startBtn" id="btnJoinOnline" onclick="joinOnlineGame()" style="margin-top:8px">Připojit se</button>
+    </div>
+    <div id="onlineLobby" class="sr" style="display:none;margin-top:12px;padding:10px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
+      <div class="ginfo" id="onlineLobbyMsg"></div>
+      <div class="ginfo" id="onlineGameCode" style="font-size:1.1em;font-weight:800;margin:8px 0"></div>
+      <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none">Kopírovat odkaz</button>
+      <button class="startBtn" id="btnEnterSecret" onclick="showOnlineSecretModal()" style="display:none;margin-top:8px">Zadat tajný kód</button>
+    </div>
+  </div>
+</div>
 <div class="pg" id="pg-game">
   <div class="ghdr">
-    <div class="ginfo">Pokus <span id="attNum">1</span> / <span id="attMax">10</span></div>
+    <div class="ginfo"><span id="gameModeLabel">Pokus <span id="attNum">1</span> / <span id="attMax">10</span></span></div>
     <button class="bbtn" onclick="showTab('setup',0)">← Zpět</button>
   </div>
   <div id="secReveal" class="secRow" style="display:none">
@@ -166,12 +186,15 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">1.0.4</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">1.1.0</span></footer>
 <script>
-const VERSION={major:1,minor:0,patch:4};
+const VERSION={major:1,minor:1,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
+const API_BASE='api';
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
 let audioCtx=null;
+let onlinePollId=null;
+let onlineGame=null;
 function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{})}
 function playSnd(type){
   try{initAudio();
@@ -198,9 +221,13 @@ function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim
 function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright'){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}}catch(e){}}
 function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
 loadStats();loadSettings();loadTheme();
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('online')==='join'&&p.get('code')){document.getElementById('onlineCode').value=p.get('code').toUpperCase().slice(0,6);showTab('online',3);document.getElementById('onlineCode').focus()}
+})();
 
 function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';const t=dk?'bright':'dark';b.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=dk?'🌙':'☀️';saveTheme()}
-function showTab(t,i){document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats()}
+function showTab(t,i){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats();if(t==='online')showOnlineLobby()}
 
 function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
 function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');saveSettings()}
@@ -239,7 +266,10 @@ function renderSecDisp(){
 }
 function pickS(id){const idx=s2p.indexOf(null);if(idx===-1)return;s2p[idx]=id;playSnd('peg');renderSecDisp()}
 function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.length<4)ng.push(null);s2p=[...ng];renderSecDisp()}
-function confirmSecret(){G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;showTab('game',1);renderBoard();renderPal()}
+function confirmSecret(){
+  if(window._onlineSecretConfirm){confirmOnlineSecret();return}
+  G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;showTab('game',1);renderBoard();renderPal()
+}
 
 function selectOrSetPeg(idx){
   if(G.over)return;
@@ -296,6 +326,7 @@ function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.g
 
 function submitGuess(){
   if(G.over||G.guess.includes(null))return;
+  if(G.mode==='online'&&onlineGame){submitOnlineGuess();return}
   const fb=calcFB(G.secret,G.guess);
   G.hist.push({guess:[...G.guess],fb});
   G.guess=[null,null,null,null];selectedSlot=null;
@@ -322,9 +353,28 @@ function showEnd(won){
 function playAgain(){document.getElementById('endOvl').classList.remove('show');startGame(G.mode==='2p')}
 function goBack(){document.getElementById('endOvl').classList.remove('show');showTab('setup',0)}
 
-function addStat(won){stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});saveStats()}
+function addStat(won){
+  stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});
+  saveStats();
+  if(typeof API_BASE!=='undefined'&&API_BASE){
+    const mode=onlineGame?'online':G.mode;
+    fetch(API_BASE+'/save_result.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      player_name:G.mode==='2p'?G.codeBreaker:G.n1,won,attempts:G.hist.length,mode,difficulty:G.diff,game_code:onlineGame?onlineGame.game_code:null
+    })}).then(r=>r.json()).catch(()=>{});
+  }
+}
 
 function renderStats(){
+  const playerName=document.getElementById('n1').value.trim()||'Hráč';
+  if(typeof API_BASE!=='undefined'&&API_BASE){
+    fetch(API_BASE+'/get_stats.php?player_name='+encodeURIComponent(playerName)).then(r=>r.json()).then(data=>{
+      if(data.ok&&data.stats){mergeStatsFromApi(data.stats);renderStatsUI();return}
+      renderStatsUI();
+    }).catch(()=>renderStatsUI());
+  }else{renderStatsUI()}
+}
+function mergeStatsFromApi(apiStats){if(apiStats.items){stats=apiStats.items.map(s=>({name:s.player_name,won:!!parseInt(s.won,10),att:parseInt(s.attempts,10),diff:s.difficulty||'',mode:s.mode||'1p',date:s.created_at?new Date(s.created_at).toLocaleDateString('cs-CZ'):''}));saveStats()}}
+function renderStatsUI(){
   const wins=stats.filter(s=>s.won);
   document.getElementById('stT').textContent=stats.length;
   document.getElementById('stW').textContent=wins.length;
@@ -334,11 +384,110 @@ function renderStats(){
   if(!stats.length){el.innerHTML='<div class="noH">Žádné hry zatím.</div>';return}
   [...stats].reverse().forEach(s=>{
     const d=document.createElement('div');d.className='sItem';
-    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pokusů · '+s.diff+' · '+s.date+'</span>';
+    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pokusů · '+(s.diff||'')+' · '+s.date+'</span>';
     el.appendChild(d);
   });
 }
 function clearStats(){stats=[];saveStats();renderStats()}
+
+function createOnlineGame(){
+  const name=document.getElementById('n1').value.trim()||'Hráč 1';
+  fetch(API_BASE+'/create_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player1_name:name})})
+    .then(r=>r.json()).then(data=>{
+      if(!data.ok){alert(data.error||'Chyba');return}
+      onlineGame={game_code:data.game_code,role:'maker',player1_name:data.player1_name,player2_name:null,status:'waiting'};
+      showTab('online',3);
+      showOnlineLobby();
+    }).catch(()=>alert('Nelze připojit k serveru. Zkontroluj API.'));
+}
+function joinOnlineGame(){
+  const code=document.getElementById('onlineCode').value.trim().toUpperCase();
+  const name=document.getElementById('n1').value.trim()||'Hráč 2';
+  if(!code||code.length!==6){alert('Zadej 6místný kód hry.');return}
+  fetch(API_BASE+'/join_game.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:code,player2_name:name})})
+    .then(r=>r.json()).then(data=>{
+      if(!data.ok){alert(data.error||'Chyba');return}
+      onlineGame={game_code:data.game_code,role:'breaker',player1_name:data.player1_name,player2_name:data.player2_name,status:data.status};
+      showTab('online',3);
+      showOnlineLobby();
+      if(data.status==='secret_entered'||data.status==='playing')startOnlineGame();
+      else onlinePollId=setInterval(pollOnlineGame,2000);
+    }).catch(()=>alert('Nelze připojit k serveru.'));
+}
+function showOnlineLobby(){
+  if(!onlineGame){document.getElementById('onlineLobby').style.display='none';return}
+  document.getElementById('onlineLobby').style.display='block';
+  document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
+  document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
+  if(onlineGame.role==='maker'){
+    if(onlineGame.status==='waiting'){document.getElementById('onlineLobbyMsg').textContent='Sdílej kód nebo odkaz druhému hráči. Pak zadej tajný kód.';document.getElementById('btnEnterSecret').style.display='block'}
+    else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Čeká se na druhého hráče nebo už hádá.';document.getElementById('btnEnterSecret').style.display='none'}
+  }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se na zadání kódu od vytvořitele.';document.getElementById('btnEnterSecret').style.display='none'}
+}
+function copyOnlineLink(){
+  const url=location.origin+location.pathname+'?online=join&code='+onlineGame.game_code;
+  navigator.clipboard.writeText(url).then(()=>alert('Odkaz zkopírován do schránky.')).catch(()=>prompt('Zkopíruj odkaz:',url));
+}
+function showOnlineSecretModal(){
+  G.colC=6;
+  s2p=[null,null,null,null];
+  document.getElementById('secTitle').textContent='Zadej tajný kód (online)';
+  document.getElementById('secDesc').textContent='Druhý hráč bude hádat. Vyber 4 kolíky.';
+  const el=document.getElementById('secPal');el.innerHTML='';
+  for(let i=0;i<6;i++){const d=document.createElement('div');d.className='peg';d.style.background=C[i].h;d.style.width='38px';d.style.height='38px';d.onclick=(()=>{const id=i;return()=>pickS(id)})();el.appendChild(d)}
+  renderSecDisp();
+  document.getElementById('secOvl').classList.add('show');
+  window._onlineSecretConfirm=true;
+}
+function confirmOnlineSecret(){
+  if(!window._onlineSecretConfirm){confirmSecret();return}
+  window._onlineSecretConfirm=false;
+  document.getElementById('secOvl').classList.remove('show');
+  fetch(API_BASE+'/set_secret.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:onlineGame.game_code,secret:s2p})})
+    .then(r=>r.json()).then(data=>{if(data.ok){onlineGame.status='secret_entered';showOnlineLobby();onlinePollId=setInterval(pollOnlineGame,2000)}}).catch(()=>{});
+}
+function pollOnlineGame(){
+  if(!onlineGame)return
+  fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(onlineGame.game_code)).then(r=>r.json()).then(data=>{
+    if(!data.ok)return
+    onlineGame.status=data.status;
+    if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
+    if(data.status==='secret_entered'&&onlineGame.role==='breaker'){startOnlineGame();return}
+    if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker')showTab('game',1);renderBoard();renderPal()}
+    showOnlineLobby();
+  }).catch(()=>{});
+}
+function startOnlineGame(){
+  if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}
+  fetch(API_BASE+'/get_game.php?game_code='+encodeURIComponent(onlineGame.game_code)).then(r=>r.json()).then(data=>{
+    if(!data.ok)return
+    G.mode='online';
+    G.hist=data.history||[];
+    G.maxA=data.max_attempts||10;
+    G.over=data.status==='won'||data.status==='lost';
+    G.secret=[];G.guess=[null,null,null,null];selectedSlot=null;
+    G.n1=data.player2_name;G.codeBreaker=data.player2_name;G.codeMaker=data.player1_name;
+    document.getElementById('secReveal').style.display='none';
+    showTab('game',1);
+    renderBoard();
+    renderPal();
+    if(!G.over)onlinePollId=setInterval(pollOnlineGame,2000);
+  });
+}
+function submitOnlineGuess(){
+  if(!onlineGame||G.guess.includes(null))return
+  fetch(API_BASE+'/submit_guess.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_code:onlineGame.game_code,guess:G.guess})})
+    .then(r=>r.json()).then(data=>{
+      if(!data.ok){alert(data.error||'Chyba');return}
+      G.hist=data.history||[];
+      G.guess=[null,null,null,null];selectedSlot=null;
+      document.getElementById('subBtn').disabled=true;
+      playSnd('submit');
+      if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);setTimeout(()=>{showEnd(true);onlineGame=null},500)}
+      else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);setTimeout(()=>{showEnd(false);onlineGame=null},500)}
+      else{renderBoard();renderPal()}
+    }).catch(()=>alert('Chyba odeslání.'));
+}
 
 document.addEventListener('keydown',function(e){
   if(document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;

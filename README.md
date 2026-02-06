@@ -6,6 +6,8 @@ Logická hra Mastermind v prohlížeči. Hádej tajný kód podle zpětné vazby
 
 - **1 hráč** – hra proti počítači (3 obtížnosti)
 - **2 hráči** – volba, kdo zadává kód a kdo hádl; po skončení hry se role střídají
+- **Online 2 hráči** – vytvoř hru, sdílej odkaz, druhý hráč se připojí odkudkoliv
+- **Statistiky v MySQL** – výsledky her lze ukládat do databáze
 - **Výběr políčka** – nejdřív vyber políčko, pak barvu
 - **Zvukové efekty**
 - **Tmavý / světlý režim**
@@ -13,7 +15,19 @@ Logická hra Mastermind v prohlížeči. Hádej tajný kód podle zpětné vazby
 
 ## Spuštění
 
-Otevři `index.html` v prohlížeči.
+Otevři `index.html` v prohlížeči. Pro **online hru a ukládání statistik** potřebuješ PHP a MySQL.
+
+### Nastavení MySQL a API
+
+1. Vytvoř databázi a spusť migraci:
+   ```bash
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS logik_mastermind;"
+   mysql -u root -p logik_mastermind < migrations/001_tables.sql
+   ```
+2. Konfigurace: v `api/config.php` (nebo proměnné prostředí) nastav přístup k DB:
+   - `MYSQL_HOST`, `MYSQL_DBNAME`, `MYSQL_USER`, `MYSQL_PASSWORD`
+3. Aplikaci servíruj přes PHP (např. `php -S localhost:8000` nebo Apache s PHP), aby volání na `api/*.php` fungovala.
+4. V prohlížeči otevři `http://localhost:8000` (ne přímo soubor), aby API bylo na stejné doméně.
 
 ## Deploy na GitHub + FTP
 
