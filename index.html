@@ -99,7 +99,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .modal h2.win{color:var(--win)}
 .modal h2.lose{color:var(--lose)}
 .modal p{color:var(--text2);font-size:.84em;margin-bottom:16px}
-.waitingBreaker{display:flex!important;align-items:center;justify-content:center;gap:8px;padding:14px;margin:10px 0;background:var(--card2);border-radius:10px;border:1px solid var(--acc);color:var(--acc);font-weight:600;font-size:.9em}
+.waitingBreaker{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;margin:10px 0;background:var(--card2);border-radius:10px;border:1px solid var(--acc);color:var(--acc);font-weight:600;font-size:.9em}
 .waitingDots{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);animation:waitPulse 1s ease-in-out infinite}
 @keyframes waitPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.2)}}
 .modal .btnRow{flex-direction:column;gap:7px}
@@ -268,10 +268,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.3.1</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.3.2</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:3,patch:1};
+const VERSION={major:2,minor:3,patch:2};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
