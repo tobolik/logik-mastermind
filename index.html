@@ -102,6 +102,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .waitingBreaker{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;margin:10px 0;background:var(--card2);border-radius:10px;border:1px solid var(--acc);color:var(--acc);font-weight:600;font-size:.9em}
 .waitingDots{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);animation:waitPulse 1s ease-in-out infinite}
 @keyframes waitPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.2)}}
+.makerAction{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:8px 0;background:var(--acc);color:#1a1210;border-radius:10px;font-weight:700;font-size:.85em}
+.makerAction .blinkIcon{font-size:1.2em;animation:waitPulse 1s ease-in-out infinite}
 .modal .btnRow{flex-direction:column;gap:7px}
 .modal .btnRow button{padding:9px;border-radius:9px;border:none;font-size:.88em;font-weight:700;cursor:pointer}
 .modal .btnRow .pri{background:var(--btn);color:#fff}
@@ -189,6 +191,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     </div>
     <div id="onlineLobby" class="sr" style="display:none;margin-top:16px;padding:14px;background:var(--cell);border-radius:10px;border:1px solid var(--border)">
       <div class="ginfo" id="onlineLobbyMsg" style="margin-bottom:8px"></div>
+      <div id="onlineMakerAction" class="makerAction" style="display:none"><span class="blinkIcon">🔔</span> Na tebe se čeká – zadej tajný kód</div>
       <div id="onlineWaitingBreaker" class="waitingBreaker" style="display:none"><span class="waitingDots"></span> Čekám na zadání kódu od protihráče…</div>
       <div class="ginfo" id="onlineGameCode" style="font-size:1.2em;font-weight:800;margin:8px 0;letter-spacing:.1em"></div>
       <button class="bbtn" id="btnCopyLink" onclick="copyOnlineLink()" style="display:none;margin-bottom:10px">📋 Kopírovat odkaz</button>
@@ -268,10 +271,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <div class="cpColors" id="cpColors"></div>
   <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">2.3.2</span></footer>
+<footer class="ftr" id="footer">V <span id="ver">2.3.3</span></footer>
 <script src="config.js"></script>
 <script>
-const VERSION={major:2,minor:3,patch:2};
+const VERSION={major:2,minor:3,patch:3};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const SUPABASE_URL=(typeof window.SUPABASE_URL!=='undefined'?window.SUPABASE_URL:'');
@@ -546,7 +549,7 @@ function submitGuess(){
   playSnd('submit');
   if(fb.b===4){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(true);clearGame();setTimeout(()=>showEnd(true),500)}
   else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(false);clearGame();setTimeout(()=>showEnd(false),500)}
-  else{selectedSlot=0;renderBoard();renderPal();saveGame()}
+  else{selectedSlot=0;renderBoard();renderPal();saveGame();showColorPopForKeyboard()}
 }
 
 function revealSecret(){
@@ -696,12 +699,14 @@ function showOnlineLobby(){
   document.getElementById('onlineGameCode').textContent=onlineGame.game_code;
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
   document.getElementById('onlineWaitingBreaker').style.display='none';
+  document.getElementById('onlineMakerAction').style.display='none';
   if(onlineGame.status==='won'||onlineGame.status==='lost'){document.getElementById('onlineLobbyMsg').textContent='Hra skončila. Vytvoř novou hru nebo se připoj k jiné.';document.getElementById('btnEnterSecret').style.display='none';return}
   if(onlineGame.role==='maker'){
     if(onlineGame.status==='waiting'){
       const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil – zadej mu hádanku (tajný kód):':'Sdílej odkaz. Až se někdo připojí, zadej tajný kód.';
       document.getElementById('onlineLobbyMsg').textContent=who;
       const btn=document.getElementById('btnEnterSecret');btn.style.display='block';btn.textContent=onlineGame.player2_name?'🔐 Zadat hádanku pro '+onlineGame.player2_name:'🔐 Zadat tajný kód (4 barvy)';
+      if(onlineGame.player2_name)document.getElementById('onlineMakerAction').style.display='flex';
     }else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající '+(onlineGame.player2_name||'')+' může hádat.';document.getElementById('btnEnterSecret').style.display='none'}
   }else{
     document.getElementById('onlineLobbyMsg').textContent='Až tvůrce kódu zadá tajný kód, hra začne.';
@@ -767,12 +772,12 @@ function submitOnlineGuess(){
   apiSubmitGuess(onlineGame.game_code,G.guess).then(data=>{
       if(!data.ok){alert(data.error||'Chyba');return}
       G.hist=data.history||[];
-      G.guess=[null,null,null,null];selectedSlot=null;
+      G.guess=[null,null,null,null];selectedSlot=0;
       document.getElementById('subBtn').disabled=true;
       playSnd('submit');
       if(data.won){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(true);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:false,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(true),500)}
       else if(data.lost){G.over=true;if(data.secret)G.secret=data.secret;revealSecret();addStat(false);if(useSupabase()||API_BASE)apiSaveResult({player_name:onlineGame.player1_name,won:true,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>showEnd(false),500)}
-      else{renderBoard();renderPal()}
+      else{renderBoard();renderPal();showColorPopForKeyboard()}
     }).catch(()=>alert('Chyba odeslání.'));
 }
 
@@ -804,11 +809,9 @@ document.addEventListener('keydown',function(e){
   if(popOpen){
     if(k==='arrowleft'||k==='arrowup'){popColorIndex=(popColorIndex-1+G.colC)%G.colC;highlightPopColor();e.preventDefault();return}
     if(k==='arrowright'||k==='arrowdown'){popColorIndex=(popColorIndex+1)%G.colC;highlightPopColor();e.preventDefault();return}
-    if(k==='enter'&&!e.ctrlKey){pickColor(popColorIndex);e.preventDefault();return}
-    if(k==='enter'&&e.ctrlKey){if(!G.guess.includes(null)){hideColorPop();submitGuess()}e.preventDefault();return}
+    if(k==='enter'){if(!G.guess.includes(null)){hideColorPop();submitGuess()}e.preventDefault();return}
     if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault();return}
   }
-  if(k==='enter'&&e.ctrlKey){if(!G.guess.includes(null))submitGuess();e.preventDefault();return}
   if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
   if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();showColorPopForKeyboard();e.preventDefault();return}
   if(k==='q'||k==='w'||k==='e'||k==='r'){const idx={'q':0,'w':1,'e':2,'r':3}[k];selectOrSetPeg(idx);e.preventDefault();return}
