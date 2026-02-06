@@ -25,15 +25,20 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .sr label{font-size:.76em;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
 .sr input{padding:8px 10px;border-radius:8px;border:1px solid var(--cellB);background:var(--inp);color:var(--text);font-size:.9em;outline:none}
 .sr input:focus{border-color:var(--acc)}
+.diffDesc{font-size:.72em;color:var(--text2);text-align:center;margin-top:6px}
 .btnRow{display:flex;gap:6px}
 .btnRow button{flex:1;padding:9px 4px;border-radius:8px;border:2px solid var(--border);background:var(--cell);color:var(--text);cursor:pointer;font-size:.82em;font-weight:600;text-align:center;transition:all .2s}
 .btnRow button.act{border-color:var(--acc);background:var(--acc);color:#fff}
+:root[data-theme=dark] .btnRow button.act{color:#1a1210}
 .startBtn{width:100%;padding:11px;border:none;border-radius:10px;background:var(--btn);color:#fff;font-size:.95em;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
 .startBtn:hover{background:var(--btnH)}
 .startBtn:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .ghdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .ginfo{font-size:.8em;color:var(--text2)}
 .ginfo span{font-weight:700;color:var(--acc)}
+.timer{font-size:.8em;color:var(--text2);text-align:center;margin-bottom:6px}
+.timer span{font-weight:700;color:var(--acc)}
+.timer.warn span{color:var(--lose)}
 .bbtn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:.8em;text-decoration:underline}
 .board{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .grow{display:flex;align-items:center;gap:5px;background:var(--cell);border-radius:8px;padding:5px 6px;border:1px solid var(--cellB)}
@@ -49,7 +54,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .peg.slotSel{box-shadow:var(--sel);transform:scale(1.08);border-color:var(--acc)}
 .fb{display:flex;flex-wrap:wrap;gap:2px;width:44px;justify-content:center;margin-left:auto}
 .fbp{width:11px;height:11px;border-radius:50%}
-.fbb{background:#2d2d2d;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.fbb{background:#2d2d2d;box-shadow:0 1px 2px rgba(0,0,0,.3);border:1px solid transparent}
+:root[data-theme=dark] .fbb{border-color:#888}
 .fbw{background:#fff;border:2px solid #999}
 .palSec{background:var(--card);border-radius:12px;padding:12px 14px;border:1px solid var(--border);box-shadow:var(--sh);margin-bottom:10px}
 .palLbl{font-size:.72em;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;font-weight:600}
@@ -62,11 +68,21 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .bSub:hover{background:var(--btnH)}
 .bSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .bClr{background:var(--card2);color:var(--text2)}
+.colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
+.colorPop.show{display:block;animation:mIn .15s ease}
+.colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
+.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+.colorPop .peg{width:44px;height:44px}
+.colorPop .cpSub{width:100%;padding:9px;border:none;border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.colorPop .cpSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
 .secLbl{font-size:.7em;color:var(--text2);margin-left:auto;font-weight:600;text-transform:uppercase}
 .ovl{display:none;position:fixed;inset:0;background:var(--ovl);z-index:100;justify-content:center;align-items:center}
 .ovl.show{display:flex}
-.modal{background:var(--mod);border-radius:18px;padding:28px 24px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.3);max-width:320px;width:90%;animation:mIn .25s ease}
+.modal{background:var(--mod);border-radius:18px;padding:28px 24px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.3);max-width:320px;width:90%;animation:mIn .25s ease;position:relative}
+.mClose{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.3em;color:var(--text2);cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .2s}
+.mClose:hover{background:var(--card2)}
+.modal .btnRow button.sel{box-shadow:var(--sel)}
 @keyframes mIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .modal h2{font-size:1.5em;margin-bottom:4px}
 .modal h2.win{color:var(--win)}
@@ -91,6 +107,23 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .sItem .sa{color:var(--text2)}
 .clrBtn{background:none;border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.72em;margin-top:8px;display:block;margin-left:auto;margin-right:auto}
 .clrBtn:hover{border-color:var(--lose);color:var(--lose)}
+.sTabs{display:flex;gap:4px;margin-bottom:12px}
+.sTab{flex:1;padding:6px 4px;border:none;border-radius:8px;cursor:pointer;font-size:.75em;font-weight:600;background:var(--border);color:var(--text2);transition:all .2s}
+.sTab.act{background:var(--btn);color:#fff}
+.pSel{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--cellB);background:var(--inp);color:var(--text);font-size:.85em;margin-bottom:10px}
+.cmpBox{background:var(--cell);border-radius:10px;padding:12px;border:1px solid var(--border);margin-bottom:10px}
+.cmpTitle{font-size:.8em;font-weight:700;color:var(--acc);text-align:center;margin-bottom:8px}
+.cmpRow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.78em}
+.cmpRow .cmpN{font-weight:600;flex:1}
+.cmpRow .cmpV{font-weight:700;color:var(--acc);width:50px;text-align:center}
+.cmpRow .cmpBar{flex:2;height:8px;background:var(--border);border-radius:4px;margin:0 8px;overflow:hidden;display:flex}
+.cmpBar .cmpL{background:var(--btn);height:100%}
+.cmpBar .cmpR{background:var(--win);height:100%}
+.pCard{background:var(--cell);border-radius:10px;padding:10px;border:1px solid var(--border);margin-bottom:8px}
+.pCard .pName{font-weight:700;color:var(--acc);font-size:.9em;margin-bottom:6px}
+.pCard .pStats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:.72em;color:var(--text2)}
+.pCard .pStats span{text-align:center}
+.pCard .pStats .pVal{font-weight:700;color:var(--text)}
 .noH{color:var(--text2);font-size:.8em;text-align:center;padding:12px 0}
 .ftr{text-align:center;padding:12px;font-size:.75em;color:var(--text2)}
 </style>
@@ -119,7 +152,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
       <div class="btnRow"><button class="act" id="we1" onclick="setWhoEnters(1)">Hráč 1</button><button id="we2" onclick="setWhoEnters(2)">Hráč 2</button></div>
     </div>
     <div class="sr" id="diffR"><label>Obtížnost</label>
-      <div class="btnRow"><button class="act" id="dE" onclick="setDiff('easy')">Lehká</button><button id="dM" onclick="setDiff('medium')">Střed</button><button id="dH" onclick="setDiff('hard')">Těžká</button></div>
+      <div class="btnRow"><button class="act" id="dE" onclick="setDiff('easy')" title="6 barev, bez opakování, 12 pokusů">Lehká</button><button id="dM" onclick="setDiff('medium')" title="6 barev, s opakováním, 10 pokusů">Střední</button><button id="dH" onclick="setDiff('hard')" title="8 barev, s opakováním, 8 pokusů">Těžká</button></div>
+      <div class="diffDesc" id="diffDesc"></div>
+    </div>
+    <div class="sr"><label>Časový limit</label>
+      <div class="btnRow"><button class="act" id="tlOff" onclick="setTimeLimit(0)">Vypnuto</button><button id="tl3" onclick="setTimeLimit(3)">3 min</button><button id="tl5" onclick="setTimeLimit(5)">5 min</button><button id="tl10" onclick="setTimeLimit(10)">10 min</button></div>
     </div>
     <button class="startBtn" onclick="initAudio();startGame()">Začít hru ▶</button>
   </div>
@@ -148,6 +185,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="ginfo"><span id="gameModeLabel">Pokus <span id="attNum">1</span> / <span id="attMax">10</span></span></div>
     <button class="bbtn" onclick="showTab('setup',0)">← Zpět</button>
   </div>
+  <div class="timer" id="timerRow" style="display:none">⏱️ <span id="timerDisp">0:00</span></div>
   <div id="secReveal" class="secRow" style="display:none">
     <div class="rn">🔓</div><div id="secPegs" style="display:flex;gap:5px"></div><div class="secLbl">Tajný kód</div>
   </div>
@@ -161,24 +199,40 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 <div class="pg" id="pg-stats">
   <div class="card">
     <h2>📊 Statistiky</h2>
-    <div class="sGrid">
-      <div class="sBox"><div class="val" id="stT">0</div><div class="lbl">Celkem her</div></div>
-      <div class="sBox"><div class="val" id="stW">0</div><div class="lbl">Výhry</div></div>
-      <div class="sBox"><div class="val" id="stB">–</div><div class="lbl">Nejlepší</div></div>
-      <div class="sBox"><div class="val" id="stA">–</div><div class="lbl">Průměr pokusů</div></div>
+    <div class="sTabs">
+      <button class="sTab act" id="stab0" onclick="showStatTab(0)">Přehled</button>
+      <button class="sTab" id="stab1" onclick="showStatTab(1)">Hráči</button>
+      <button class="sTab" id="stab2" onclick="showStatTab(2)">Porovnání</button>
     </div>
-    <div class="sList" id="sList"><div class="noH">Žádné hry zatím.</div></div>
+    <div id="statView0">
+      <div class="sGrid">
+        <div class="sBox"><div class="val" id="stT">0</div><div class="lbl">Celkem her</div></div>
+        <div class="sBox"><div class="val" id="stW">0</div><div class="lbl">Výhry</div></div>
+        <div class="sBox"><div class="val" id="stB">–</div><div class="lbl">Nejlepší</div></div>
+        <div class="sBox"><div class="val" id="stA">–</div><div class="lbl">Průměr pokusů</div></div>
+      </div>
+      <div class="sList" id="sList"><div class="noH">Žádné hry zatím.</div></div>
+    </div>
+    <div id="statView1" style="display:none">
+      <select class="pSel" id="playerSel" onchange="renderPlayerStats()"><option value="">Všichni hráči</option></select>
+      <div id="playerStats"></div>
+    </div>
+    <div id="statView2" style="display:none">
+      <div id="cmpStats"><div class="noH">Žádné hry 2 hráčů zatím.</div></div>
+    </div>
     <button class="clrBtn" onclick="clearStats()">Vymazat statistiky</button>
   </div>
 </div>
 <div class="ovl" id="endOvl">
   <div class="modal">
+    <button class="mClose" onclick="hideEndModal()" title="Zavřít (ESC)">✕</button>
     <h2 id="endTitle"></h2><p id="endMsg"></p>
-    <div class="btnRow"><button class="pri" onclick="playAgain()">Hrát znovu</button><button class="sec2" onclick="goBack()">← Zpět do menu</button></div>
+    <div class="btnRow"><button class="pri" id="btnAgain" onclick="playAgain()">Hrát znovu</button><button class="sec2" id="btnBack" onclick="goBack()">← Zpět do menu</button></div>
   </div>
 </div>
 <div class="ovl" id="secOvl">
   <div class="modal">
+    <button class="mClose" onclick="cancelSecret()" title="Zrušit (ESC)">✕</button>
     <h2 id="secTitle" style="font-size:1.15em;color:var(--acc)">Zadej tajný kód</h2>
     <p id="secDesc"></p>
     <div id="secPal" style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:10px"></div>
@@ -186,9 +240,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="startBtn" id="secConf" onclick="confirmSecret()" disabled>Potvrzeno ✓</button>
   </div>
 </div>
-<footer class="ftr" id="footer">V <span id="ver">1.1.0</span></footer>
+<div class="colorPop" id="colorPop">
+  <div class="cpTitle">Vyber barvu</div>
+  <div class="cpColors" id="cpColors"></div>
+  <button class="cpSub" id="cpSubBtn" onclick="submitFromPop()" disabled>Odeslat ✓</button>
+</div>
+<footer class="ftr" id="footer">V <span id="ver">1.4.0</span></footer>
 <script>
-const VERSION={major:1,minor:1,patch:0};
+const VERSION={major:1,minor:4,patch:0};
 document.getElementById('ver').textContent=VERSION.major+'.'+VERSION.minor+'.'+VERSION.patch;
 const API_BASE='api';
 const C=[{h:'#e74c3c'},{h:'#3498db'},{h:'#2ecc71'},{h:'#f1c40f'},{h:'#e67e22'},{h:'#9b59b6'},{h:'#e91e8a'},{h:'#00bcd4'}];
@@ -208,43 +267,84 @@ function playSnd(type){
   }catch(e){}
 }
 const D={easy:{c:6,r:false,a:12},medium:{c:6,r:true,a:10},hard:{c:8,r:true,a:8}};
-let G={mode:'1p',diff:'easy',n1:'',n2:'',secret:[],guess:[null,null,null,null],hist:[],over:false,maxA:10,colC:6,whoEnters:1,codeMaker:'',codeBreaker:''};
+let G={mode:'1p',diff:'easy',n1:'',n2:'',secret:[],guess:[null,null,null,null],hist:[],over:false,maxA:10,colC:6,whoEnters:1,codeMaker:'',codeBreaker:'',startTime:0,timeLimit:0,elapsed:0};
 let stats=[];
 let s2p=[null,null,null,null];
 let selectedSlot=null;
+let timerInterval=null;
+let endModalBtn=0;
 
-const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme'};
+const STORAGE_KEYS={stats:'logik_stats',settings:'logik_settings',theme:'logik_theme',game:'logik_game'};
 function loadStats(){try{const d=localStorage.getItem(STORAGE_KEYS.stats);if(d){stats=JSON.parse(d)}}catch(e){stats=[]}}
 function saveStats(){try{localStorage.setItem(STORAGE_KEYS.stats,JSON.stringify(stats))}catch(e){}}
-function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters)}}catch(e){}}
-function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
-function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright'){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}}catch(e){}}
+function loadSettings(){try{const d=localStorage.getItem(STORAGE_KEYS.settings);if(d){const s=JSON.parse(d);document.getElementById('n1').value=s.n1||'';document.getElementById('n2').value=s.n2||'';G.mode=s.mode||'1p';G.diff=s.diff||'easy';G.whoEnters=s.whoEnters||1;G.timeLimit=s.timeLimit||0;setMode(G.mode);setDiff(G.diff);setWhoEnters(G.whoEnters);setTimeLimit(G.timeLimit)}}catch(e){}}
+function saveSettings(){try{const s={n1:document.getElementById('n1').value.trim(),n2:document.getElementById('n2').value.trim(),mode:G.mode,diff:G.diff,whoEnters:G.whoEnters,timeLimit:G.timeLimit};localStorage.setItem(STORAGE_KEYS.settings,JSON.stringify(s))}catch(e){}}
+function saveGame(){try{G.elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;const state={G:G,selectedSlot:selectedSlot};localStorage.setItem(STORAGE_KEYS.game,JSON.stringify(state))}catch(e){}}
+function loadGame(){try{const curTimeLimit=G.timeLimit;const d=localStorage.getItem(STORAGE_KEYS.game);if(d){const state=JSON.parse(d);if(state.G&&state.G.secret&&state.G.secret.length>0&&!state.G.over){G=state.G;G.timeLimit=curTimeLimit;if(G.elapsed)G.startTime=Date.now()-G.elapsed*1000;selectedSlot=state.selectedSlot;return true}}return false}catch(e){return false}}
+function clearGame(){try{localStorage.removeItem(STORAGE_KEYS.game)}catch(e){}}
+function applyTheme(t){document.body.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=t==='dark'?'☀️':'🌙'}
+function loadTheme(){try{let t=localStorage.getItem(STORAGE_KEYS.theme);if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark'||t==='bright')applyTheme(t)}catch(e){}}
 function saveTheme(){try{localStorage.setItem(STORAGE_KEYS.theme,document.body.dataset.theme||'bright')}catch(e){}}
-loadStats();loadSettings();loadTheme();
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{if(!localStorage.getItem(STORAGE_KEYS.theme)){applyTheme(e.matches?'dark':'bright')}})}
+loadStats();loadSettings();loadTheme();setDiff(G.diff);
 (function(){
   const p=new URLSearchParams(location.search);
   if(p.get('online')==='join'&&p.get('code')){document.getElementById('onlineCode').value=p.get('code').toUpperCase().slice(0,6);showTab('online',3);document.getElementById('onlineCode').focus()}
 })();
+function restoreGame(){if(loadGame()){showTab('game',1);renderBoard();renderPal();document.getElementById('subBtn').disabled=G.guess.includes(null);startTimer()}}
+setTimeout(restoreGame,0);
 
-function toggleTheme(){const b=document.body;const dk=b.dataset.theme==='dark';const t=dk?'bright':'dark';b.dataset.theme=t;document.documentElement.setAttribute('data-theme',t);document.getElementById('tglBtn').textContent=dk?'🌙':'☀️';saveTheme()}
+function toggleTheme(){const dk=document.body.dataset.theme==='dark';const t=dk?'bright':'dark';applyTheme(t);saveTheme()}
 function showTab(t,i){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('act'));document.getElementById('pg-'+t).classList.add('act');document.getElementById('tab'+i).classList.add('act');if(t==='stats')renderStats();if(t==='online')showOnlineLobby()}
 
-function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';document.getElementById('diffR').style.display=m==='1p'?'flex':'none';saveSettings()}
-function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');saveSettings()}
+function setMode(m){G.mode=m;document.getElementById('m1p').classList.toggle('act',m==='1p');document.getElementById('m2p').classList.toggle('act',m==='2p');document.getElementById('n2r').style.display=m==='2p'?'flex':'none';document.getElementById('whoEntersR').style.display=m==='2p'?'flex':'none';updateDiffDesc();saveSettings()}
+const DIFF_DESC={easy:'6 barev · bez opakování · 12 pokusů',medium:'6 barev · s opakováním · 10 pokusů',hard:'8 barev · s opakováním · 8 pokusů'};
+const DIFF_DESC_2P={easy:'6 barev · 12 pokusů',medium:'6 barev · 10 pokusů',hard:'8 barev · 8 pokusů'};
+function setDiff(d){G.diff=d;['E','M','H'].forEach(x=>document.getElementById('d'+x).classList.remove('act'));document.getElementById('d'+d[0].toUpperCase()).classList.add('act');updateDiffDesc();saveSettings()}
+function updateDiffDesc(){document.getElementById('diffDesc').textContent=(G.mode==='2p'?DIFF_DESC_2P:DIFF_DESC)[G.diff]+(G.mode==='2p'?' · opakování volí zadávající':'')}
 function setWhoEnters(w){G.whoEnters=w;document.getElementById('we1').classList.toggle('act',w===1);document.getElementById('we2').classList.toggle('act',w===2);saveSettings()}
+function setTimeLimit(m){G.timeLimit=m;['Off','3','5','10'].forEach(x=>document.getElementById('tl'+x).classList.remove('act'));document.getElementById('tl'+(m===0?'Off':m)).classList.add('act');saveSettings()}
+
+function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return m+':'+(sec<10?'0':'')+sec}
+function startTimer(){
+  stopTimer();
+  const row=document.getElementById('timerRow');
+  row.style.display='block';
+  updateTimerDisplay();
+  timerInterval=setInterval(()=>{
+    updateTimerDisplay();
+    if(G.timeLimit>0){
+      const elapsed=Math.floor((Date.now()-G.startTime)/1000);
+      const remaining=G.timeLimit*60-elapsed;
+      if(remaining<=0&&!G.over){stopTimer();timeOut()}
+    }
+  },1000);
+}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
+function updateTimerDisplay(){
+  const el=document.getElementById('timerDisp');const row=document.getElementById('timerRow');
+  const elapsed=Math.floor((Date.now()-G.startTime)/1000);
+  if(G.timeLimit>0){
+    const remaining=Math.max(0,G.timeLimit*60-elapsed);
+    el.textContent=formatTime(remaining);
+    row.classList.toggle('warn',remaining<=30);
+  }else{el.textContent=formatTime(elapsed);row.classList.remove('warn')}
+}
+function timeOut(){G.over=true;selectedSlot=null;renderBoard();revealSecret();addStat(false);clearGame();playSnd('lose');setTimeout(()=>showEnd(false,true),500)}
 
 function genSecret(cnt,rep){const av=[];for(let i=0;i<cnt;i++)av.push(i);const code=[];const pool=[...av];for(let i=0;i<4;i++){const idx=Math.floor(Math.random()*pool.length);code.push(pool[idx]);if(!rep)pool.splice(idx,1)}return code}
 
 function calcFB(sec,guess){let b=0,w=0;const sR=[],gR=[];for(let i=0;i<4;i++){if(sec[i]===guess[i])b++;else{sR.push(sec[i]);gR.push(guess[i])}}for(const g of gR){const idx=sR.indexOf(g);if(idx!==-1){w++;sR.splice(idx,1)}}return{b,w}}
 
 function startGame(swap2P){
-  saveSettings();
+  saveSettings();stopTimer();
   G.n1=document.getElementById('n1').value.trim()||(G.mode==='1p'?'Hráč':'Hráč 1');
   G.n2=G.mode==='2p'?(document.getElementById('n2').value.trim()||'Hráč 2'):'Počítač';
-  G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;
+  G.hist=[];G.over=false;G.guess=[null,null,null,null];selectedSlot=null;G.startTime=Date.now();G.elapsed=0;
   document.getElementById('secReveal').style.display='none';
-  if(G.mode==='1p'){const cfg=D[G.diff];G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal()}
-  else{G.colC=6;G.maxA=10;G.secret=[];
+  const cfg=D[G.diff];
+  if(G.mode==='1p'){G.secret=genSecret(cfg.c,cfg.r);G.maxA=cfg.a;G.colC=cfg.c;showTab('game',1);renderBoard();renderPal();startTimer();saveGame()}
+  else{G.colC=cfg.c;G.maxA=cfg.a;G.secret=[];
     if(swap2P&&G.codeMaker){G.whoEnters=G.whoEnters===1?2:1;setWhoEnters(G.whoEnters)}
     G.codeMaker=G.whoEnters===1?G.n1:G.n2;G.codeBreaker=G.whoEnters===1?G.n2:G.n1;
     show2P()}
@@ -268,13 +368,53 @@ function pickS(id){const idx=s2p.indexOf(null);if(idx===-1)return;s2p[idx]=id;pl
 function removeS(idx){s2p[idx]=null;const ng=s2p.filter(v=>v!==null);while(ng.length<4)ng.push(null);s2p=[...ng];renderSecDisp()}
 function confirmSecret(){
   if(window._onlineSecretConfirm){confirmOnlineSecret();return}
-  G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;showTab('game',1);renderBoard();renderPal()
+  G.secret=[...s2p];document.getElementById('secOvl').classList.remove('show');G.n1=G.codeBreaker;G.startTime=Date.now();showTab('game',1);renderBoard();renderPal();startTimer();saveGame()
 }
+function cancelSecret(){document.getElementById('secOvl').classList.remove('show');showTab('setup',0)}
 
-function selectOrSetPeg(idx){
+function selectOrSetPeg(idx,evt){
   if(G.over)return;
-  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);return}
-  selectedSlot=idx;renderBoard();renderPal()
+  if(selectedSlot===idx&&G.guess[idx]!==null){removePeg(idx);hideColorPop();return}
+  selectedSlot=idx;renderBoard();renderPal();
+  if(evt)showColorPop(evt)
+}
+function showColorPop(evt){
+  const pop=document.getElementById('colorPop');
+  const colors=document.getElementById('cpColors');
+  colors.innerHTML='';
+  for(let i=0;i<G.colC;i++){
+    const d=document.createElement('div');d.className='peg';d.style.background=C[i].h;
+    d.onclick=(()=>{const id=i;return(e)=>{e.stopPropagation();pickColorPop(id)}})();
+    colors.appendChild(d);
+  }
+  // Find current row and position popup below it
+  const curRow=document.querySelector('.grow.cur');
+  const rect=curRow?curRow.getBoundingClientRect():evt.target.getBoundingClientRect();
+  const popW=Math.min(G.colC*52+24,300);
+  let left=rect.left+(rect.width-popW)/2;
+  let top=rect.bottom+6;
+  if(left<8)left=8;
+  if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8;
+  if(top+180>window.innerHeight){top=rect.top-180}
+  pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=popW+'px';
+  document.getElementById('cpSubBtn').disabled=G.guess.includes(null);
+  pop.classList.add('show');
+}
+function hideColorPop(){document.getElementById('colorPop').classList.remove('show')}
+function pickColorPop(id){
+  if(G.over||selectedSlot===null)return;
+  G.guess[selectedSlot]=id;playSnd('peg');
+  const allFilled=!G.guess.includes(null);
+  document.getElementById('subBtn').disabled=!allFilled;
+  document.getElementById('cpSubBtn').disabled=!allFilled;
+  selectedSlot=selectedSlot<3?selectedSlot+1:null;
+  renderBoard();renderPal();saveGame();
+  if(selectedSlot===null&&!allFilled){hideColorPop()}
+}
+function submitFromPop(){
+  if(G.guess.includes(null))return;
+  hideColorPop();
+  submitGuess();
 }
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
@@ -297,8 +437,8 @@ function renderBoard(){
     row.innerHTML=html;
     for(let j=0;j<4;j++){
       const p=document.createElement('div');
-      if(G.guess[j]!==null){p.className='peg'+(selectedSlot===j?' slotSel':'');p.style.background=C[G.guess[j]].h;p.onclick=(()=>{const idx=j;return()=>selectOrSetPeg(idx)})()}
-      else{p.className='peg ep'+(selectedSlot===j?' slotSel':'');p.onclick=(()=>{const idx=j;return()=>selectOrSetPeg(idx)})()}
+      if(G.guess[j]!==null){p.className='peg'+(selectedSlot===j?' slotSel':'');p.style.background=C[G.guess[j]].h;p.onclick=(()=>{const idx=j;return(e)=>selectOrSetPeg(idx,e)})()}
+      else{p.className='peg ep'+(selectedSlot===j?' slotSel':'');p.onclick=(()=>{const idx=j;return(e)=>selectOrSetPeg(idx,e)})()}
       row.appendChild(p);
     }
     el.appendChild(row);
@@ -320,21 +460,21 @@ function renderPal(){
     el.appendChild(d);
   }
 }
-function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal()}
-function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal()}
-function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;document.getElementById('subBtn').disabled=true;renderBoard();renderPal()}
+function pickColor(id){if(G.over)return;if(selectedSlot===null)return;G.guess[selectedSlot]=id;playSnd('peg');document.getElementById('subBtn').disabled=G.guess.includes(null);hideColorPop();selectedSlot=selectedSlot<3?selectedSlot+1:null;renderBoard();renderPal();saveGame()}
+function removePeg(idx){if(G.over)return;G.guess[idx]=null;selectedSlot=null;document.getElementById('subBtn').disabled=G.guess.includes(null);renderBoard();renderPal();saveGame()}
+function clearGuess(){G.guess=[null,null,null,null];selectedSlot=null;hideColorPop();document.getElementById('subBtn').disabled=true;renderBoard();renderPal();saveGame()}
 
 function submitGuess(){
   if(G.over||G.guess.includes(null))return;
   if(G.mode==='online'&&onlineGame){submitOnlineGuess();return}
   const fb=calcFB(G.secret,G.guess);
   G.hist.push({guess:[...G.guess],fb});
-  G.guess=[null,null,null,null];selectedSlot=null;
+  G.guess=[null,null,null,null];
   document.getElementById('subBtn').disabled=true;
   playSnd('submit');
-  if(fb.b===4){G.over=true;renderBoard();revealSecret();addStat(true);setTimeout(()=>showEnd(true),500)}
-  else if(G.hist.length>=G.maxA){G.over=true;renderBoard();revealSecret();addStat(false);setTimeout(()=>showEnd(false),500)}
-  else{renderBoard();renderPal()}
+  if(fb.b===4){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(true);clearGame();setTimeout(()=>showEnd(true),500)}
+  else if(G.hist.length>=G.maxA){G.over=true;selectedSlot=null;stopTimer();renderBoard();revealSecret();addStat(false);clearGame();setTimeout(()=>showEnd(false),500)}
+  else{selectedSlot=0;renderBoard();renderPal();saveGame()}
 }
 
 function revealSecret(){
@@ -343,19 +483,26 @@ function revealSecret(){
   G.secret.forEach(id=>{const d=document.createElement('div');d.className='peg';d.style.background=C[id].h;d.style.width='34px';d.style.height='34px';p.appendChild(d)});
 }
 
-function showEnd(won){
+function showEnd(won,timeout){
   const t=document.getElementById('endTitle');const m=document.getElementById('endMsg');
   const guesser=G.mode==='2p'?G.codeBreaker:G.n1;
-  if(won){t.className='win';t.textContent='🎉 Výhra!';m.textContent=guesser+' uhodl kód za '+G.hist.length+' pokus'+(G.hist.length===1?'':'ů')+'!';playSnd('win')}
-  else{t.className='lose';t.textContent='😞 Prohra';m.textContent='Tajný kód nebyl uhoden za '+G.maxA+' pokusů.';playSnd('lose')}
+  const elapsed=Math.floor((Date.now()-G.startTime)/1000);
+  const timeStr=' ('+formatTime(elapsed)+')';
+  if(won){t.className='win';t.textContent='🎉 Výhra!';m.textContent=guesser+' uhodl kód za '+G.hist.length+' pokus'+(G.hist.length===1?'':'ů')+timeStr+'!';playSnd('win')}
+  else{t.className='lose';t.textContent='😞 Prohra';m.textContent=timeout?'Vypršel čas!':'Tajný kód nebyl uhoden za '+G.maxA+' pokusů.';if(!timeout)m.textContent+=timeStr;playSnd('lose')}
+  endModalBtn=0;updateEndModalBtns();
   document.getElementById('endOvl').classList.add('show');
 }
-function playAgain(){document.getElementById('endOvl').classList.remove('show');startGame(G.mode==='2p')}
-function goBack(){document.getElementById('endOvl').classList.remove('show');showTab('setup',0)}
+function hideEndModal(){document.getElementById('endOvl').classList.remove('show')}
+function updateEndModalBtns(){document.getElementById('btnAgain').classList.toggle('sel',endModalBtn===0);document.getElementById('btnBack').classList.toggle('sel',endModalBtn===1)}
+function playAgain(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();startGame(G.mode==='2p')}
+function goBack(){document.getElementById('endOvl').classList.remove('show');stopTimer();clearGame();showTab('setup',0)}
 
 function addStat(won){
-  stats.push({name:G.n1,won,att:G.hist.length,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')});
-  saveStats();
+  const elapsed=G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;
+  const stat={name:G.n1,won,att:G.hist.length,time:elapsed,diff:G.diff,mode:G.mode,date:new Date().toLocaleDateString('cs-CZ')};
+  if(G.mode==='2p'){stat.opponent=G.codeMaker;stat.breaker=G.codeBreaker;stat.maker=G.codeMaker}
+  stats.push(stat);saveStats();
   if(typeof API_BASE!=='undefined'&&API_BASE){
     const mode=onlineGame?'online':G.mode;
     fetch(API_BASE+'/save_result.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
@@ -363,6 +510,9 @@ function addStat(won){
     })}).then(r=>r.json()).catch(()=>{});
   }
 }
+
+let statTab=0;
+function showStatTab(t){statTab=t;[0,1,2].forEach(i=>{document.getElementById('stab'+i).classList.toggle('act',i===t);document.getElementById('statView'+i).style.display=i===t?'block':'none'});if(t===1)renderPlayerStats();if(t===2)renderComparisonStats()}
 
 function renderStats(){
   const playerName=document.getElementById('n1').value.trim()||'Hráč';
@@ -384,10 +534,57 @@ function renderStatsUI(){
   if(!stats.length){el.innerHTML='<div class="noH">Žádné hry zatím.</div>';return}
   [...stats].reverse().forEach(s=>{
     const d=document.createElement('div');d.className='sItem';
-    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pokusů · '+(s.diff||'')+' · '+s.date+'</span>';
+    const timeStr=s.time?formatTime(s.time):'–';
+    d.innerHTML='<span class="sn">'+s.name+'</span><span class="sres '+(s.won?'win':'lose')+'">'+(s.won?'Výhra':'Prohra')+'</span><span class="sa">'+s.att+' pok. · '+timeStr+' · '+(s.diff||'')+' · '+s.date+'</span>';
+    el.appendChild(d);
+  });
+  if(document.getElementById('playerSel')){populatePlayerSel()}
+  if(statTab===1)renderPlayerStats();
+  if(statTab===2)renderComparisonStats();
+}
+
+function getPlayers(){const names=new Set();stats.forEach(s=>{names.add(s.name);if(s.opponent)names.add(s.opponent)});return[...names].sort()}
+function populatePlayerSel(){const sel=document.getElementById('playerSel');if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">Všichni hráči</option>';getPlayers().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=cur}
+
+function renderPlayerStats(){
+  const el=document.getElementById('playerStats');if(!el)return;el.innerHTML='';
+  const selPlayer=document.getElementById('playerSel');const selVal=selPlayer?selPlayer.value:'';
+  const players=selVal?[selVal]:getPlayers();
+  if(!players.length){el.innerHTML='<div class="noH">Žádní hráči zatím.</div>';return}
+  players.forEach(p=>{
+    const pGames=stats.filter(s=>s.name===p);
+    const pWins=pGames.filter(s=>s.won);
+    const winRate=pGames.length?Math.round(pWins.length/pGames.length*100):0;
+    const bestAtt=pWins.length?Math.min(...pWins.map(s=>s.att)):'–';
+    const avgAtt=pWins.length?Math.round(pWins.reduce((a,s)=>a+s.att,0)/pWins.length*10)/10:'–';
+    const avgTime=pWins.length?formatTime(Math.round(pWins.reduce((a,s)=>a+(s.time||0),0)/pWins.length)):'–';
+    const d=document.createElement('div');d.className='pCard';
+    d.innerHTML='<div class="pName">👤 '+p+'</div><div class="pStats"><span>Her: <span class="pVal">'+pGames.length+'</span></span><span>Výhry: <span class="pVal">'+pWins.length+' ('+winRate+'%)</span></span><span>Nejlepší: <span class="pVal">'+bestAtt+'</span></span><span>Ø pokusy: <span class="pVal">'+avgAtt+'</span></span><span>Ø čas: <span class="pVal">'+avgTime+'</span></span><span></span></div>';
     el.appendChild(d);
   });
 }
+
+function renderComparisonStats(){
+  const el=document.getElementById('cmpStats');el.innerHTML='';
+  const games2p=stats.filter(s=>s.mode==='2p'&&s.breaker&&s.maker);
+  if(!games2p.length){el.innerHTML='<div class="noH">Žádné hry 2 hráčů zatím.</div>';return}
+  const pairs={};
+  games2p.forEach(s=>{
+    const key=[s.breaker,s.maker].sort().join(' vs ');
+    if(!pairs[key])pairs[key]={p1:s.breaker<s.maker?s.breaker:s.maker,p2:s.breaker<s.maker?s.maker:s.breaker,games:[],w1:0,w2:0};
+    pairs[key].games.push(s);
+    if(s.won){if(s.breaker===pairs[key].p1)pairs[key].w1++;else pairs[key].w2++}
+  });
+  Object.values(pairs).forEach(pair=>{
+    const total=pair.w1+pair.w2;
+    const pct1=total?Math.round(pair.w1/total*100):50;
+    const pct2=100-pct1;
+    const d=document.createElement('div');d.className='cmpBox';
+    d.innerHTML='<div class="cmpTitle">'+pair.p1+' vs '+pair.p2+'</div><div class="cmpRow"><span class="cmpN">'+pair.p1+'</span><span class="cmpV">'+pair.w1+'</span><div class="cmpBar"><div class="cmpL" style="width:'+pct1+'%"></div><div class="cmpR" style="width:'+pct2+'%"></div></div><span class="cmpV">'+pair.w2+'</span><span class="cmpN" style="text-align:right">'+pair.p2+'</span></div><div style="text-align:center;font-size:.7em;color:var(--text2);margin-top:4px">Celkem her: '+pair.games.length+'</div>';
+    el.appendChild(d);
+  });
+}
+
 function clearStats(){stats=[];saveStats();renderStats()}
 
 function createOnlineGame(){
@@ -491,13 +688,26 @@ function submitOnlineGuess(){
 
 document.addEventListener('keydown',function(e){
   if(document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
-  const gameActive=document.getElementById('pg-game').classList.contains('act')&&!document.getElementById('endOvl').classList.contains('show');
+  const endActive=document.getElementById('endOvl').classList.contains('show');
+  const gameActive=document.getElementById('pg-game').classList.contains('act')&&!endActive;
   const secActive=document.getElementById('secOvl').classList.contains('show');
-  if(secActive){
-    const k=e.key;if(k>='1'&&k<='8'){const id=parseInt(k)-1;if(id<G.colC){pickS(id);e.preventDefault()}}
-    else if(k==='Backspace'){let last=-1;for(let i=3;i>=0;i--)if(s2p[i]!==null){last=i;break}if(last>=0){removeS(last);e.preventDefault()}}return;
+  if(endActive){
+    const k=e.key;
+    if(k==='Escape'){hideEndModal();e.preventDefault();return}
+    if(k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'){endModalBtn=endModalBtn===0?1:0;updateEndModalBtns();e.preventDefault();return}
+    if(k==='Enter'){if(endModalBtn===0)playAgain();else goBack();e.preventDefault();return}
+    return;
   }
-  if(!gameActive||G.over)return;
+  if(secActive){
+    const k=e.key;
+    if(k==='Escape'){cancelSecret();e.preventDefault();return}
+    if(k>='1'&&k<='8'){const id=parseInt(k)-1;if(id<G.colC){pickS(id);e.preventDefault()}}
+    else if(k==='Backspace'){let last=-1;for(let i=3;i>=0;i--)if(s2p[i]!==null){last=i;break}if(last>=0){removeS(last);e.preventDefault()}}
+    else if(k==='Enter'&&!s2p.includes(null)){confirmSecret();e.preventDefault()}
+    return;
+  }
+  if(!gameActive)return;
+  if(G.over){if(e.key==='Escape'){e.preventDefault()}return}
   const k=e.key.toLowerCase();
   if(k==='arrowleft'){selectedSlot=selectedSlot===null?3:Math.max(0,selectedSlot-1);renderBoard();renderPal();e.preventDefault();return}
   if(k==='arrowright'){selectedSlot=selectedSlot===null?0:Math.min(3,selectedSlot+1);renderBoard();renderPal();e.preventDefault();return}
@@ -505,7 +715,11 @@ document.addEventListener('keydown',function(e){
   if(k>='1'&&k<='8'&&selectedSlot!==null){const id=parseInt(k)-1;if(id<G.colC){pickColor(id);e.preventDefault()};return}
   if(k==='enter'){submitGuess();e.preventDefault();return}
   if(k==='backspace'){if(selectedSlot!==null&&G.guess[selectedSlot]!==null)removePeg(selectedSlot);else clearGuess();e.preventDefault();return}
-  if(k==='escape'){selectedSlot=null;renderBoard();renderPal();e.preventDefault()}
+  if(k==='escape'){selectedSlot=null;hideColorPop();renderBoard();renderPal();e.preventDefault()}
+});
+document.addEventListener('click',function(e){
+  const pop=document.getElementById('colorPop');
+  if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.classList.contains('peg')){hideColorPop();selectedSlot=null;renderBoard();renderPal()}
 });
 </script>
 </body>
