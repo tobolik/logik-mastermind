@@ -71,11 +71,15 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .colorPop{display:none;position:fixed;z-index:150;background:var(--mod);border-radius:14px;padding:12px;box-shadow:0 6px 30px rgba(0,0,0,.3);border:1px solid var(--border)}
 .colorPop.show{display:block;animation:mIn .15s ease}
 .colorPop .cpTitle{font-size:.75em;color:var(--text2);text-align:center;margin-bottom:8px;font-weight:600}
-.colorPop .cpColors{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
-.colorPop .peg{width:44px;height:44px}
+.colorPop .cpColors{display:flex;gap:6px;flex-wrap:nowrap;justify-content:center;margin-bottom:10px}
+.colorPop .peg{width:36px;height:36px}
 .colorPop .cpSub{width:100%;padding:9px;border:none;border-radius:8px;font-size:.85em;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
 .colorPop .cpSub:disabled{background:var(--border);color:var(--text2);cursor:not-allowed}
 .secRow{display:flex;align-items:center;gap:5px;background:var(--card2);border-radius:8px;padding:5px 6px;border:1px dashed var(--border);margin-bottom:8px}
+.secRevealFinal{background:var(--card);border:2px solid var(--acc);padding:12px 14px;margin-top:8px;flex-wrap:wrap;gap:10px}
+.secRevealLbl{font-size:1em;font-weight:700;color:var(--acc);width:100%}
+.secPegsFinal{display:flex;gap:8px;align-items:center}
+.secPegsFinal .peg{width:42px;height:42px}
 .secLbl{font-size:.7em;color:var(--text2);margin-left:auto;font-weight:600;text-transform:uppercase}
 .ovl{display:none;position:fixed;inset:0;background:var(--ovl);z-index:100;justify-content:center;align-items:center}
 .ovl.show{display:flex}
@@ -110,6 +114,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .sTabs{display:flex;gap:4px;margin-bottom:12px}
 .sTab{flex:1;padding:6px 4px;border:none;border-radius:8px;cursor:pointer;font-size:.75em;font-weight:600;background:var(--border);color:var(--text2);transition:all .2s}
 .sTab.act{background:var(--btn);color:#fff}
+.sTab.mini{flex:none;padding:4px 10px}
 .pSel{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--cellB);background:var(--inp);color:var(--text);font-size:.85em;margin-bottom:10px}
 .cmpBox{background:var(--cell);border-radius:10px;padding:12px;border:1px solid var(--border);margin-bottom:10px}
 .cmpTitle{font-size:.8em;font-weight:700;color:var(--acc);text-align:center;margin-bottom:8px}
@@ -186,11 +191,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <button class="bbtn" onclick="showTab('setup',0)">← Zpět</button>
   </div>
   <div class="timer" id="timerRow" style="display:none">⏱️ <span id="timerDisp">0:00</span></div>
-  <div id="secReveal" class="secRow" style="display:none">
-    <div class="rn">🔓</div><div id="secPegs" style="display:flex;gap:5px"></div><div class="secLbl">Tajný kód</div>
+  <div id="secReveal" class="secRow secRevealFinal" style="display:none">
+    <div class="secRevealLbl">🔓 Tajný kód byl:</div><div id="secPegs" class="secPegsFinal"></div>
   </div>
   <div class="board" id="board"></div>
-  <div class="palSec"><div class="palLbl">Políčko: Q–R nebo ←→ · Barva: 1–8</div><div class="pal" id="palette"></div></div>
+  <div class="palSec palSecHidden" id="palSec" style="display:none"><div class="palLbl">Barva: klik na políčko nebo 1–8</div><div class="pal" id="palette"></div></div>
   <div class="abts">
     <button class="bSub" id="subBtn" onclick="submitGuess()" disabled>Odeslat</button>
     <button class="bClr" onclick="clearGuess()">Vymazat</button>
@@ -211,6 +216,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
         <div class="sBox"><div class="val" id="stW">0</div><div class="lbl">Výhry</div></div>
         <div class="sBox"><div class="val" id="stB">–</div><div class="lbl">Nejlepší</div></div>
         <div class="sBox"><div class="val" id="stA">–</div><div class="lbl">Průměr pokusů</div></div>
+      </div>
+      <div class="statFilter" style="margin-bottom:6px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="sTab mini" id="statFAll" onclick="setStatsFilter('all')">Vše</button>
+        <button class="sTab mini" id="statFOff" onclick="setStatsFilter('offline')">Offline</button>
+        <button class="sTab mini" id="statFOn" onclick="setStatsFilter('online')">Online</button>
       </div>
       <div class="sList" id="sList"><div class="noH">Žádné hry zatím.</div></div>
     </div>
@@ -440,8 +450,8 @@ function submitFromPop(){
 }
 function renderBoard(){
   const el=document.getElementById('board');el.innerHTML='';
-  document.getElementById('attNum').textContent=G.hist.length+1;
-  document.getElementById('attMax').textContent=G.maxA;
+  const lbl=document.getElementById('gameModeLabel');
+  if(G.mode==='online'&&onlineGame&&G.codeMaker){lbl.innerHTML='Hádáš proti: <strong>'+G.codeMaker+'</strong> · Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>'}else{lbl.innerHTML='Pokus <span id="attNum">'+(G.hist.length+1)+'</span> / <span id="attMax">'+G.maxA+'</span>';document.getElementById('attNum').textContent=G.hist.length+1;document.getElementById('attMax').textContent=G.maxA}
   for(let i=0;i<G.hist.length;i++){
     const h=G.hist[i];const row=document.createElement('div');row.className='grow done';
     let html='<div class="rn">'+(i+1)+'</div>';
@@ -502,7 +512,7 @@ function submitGuess(){
 function revealSecret(){
   const el=document.getElementById('secReveal');el.style.display='flex';
   const p=document.getElementById('secPegs');p.innerHTML='';
-  G.secret.forEach(id=>{const d=document.createElement('div');d.className='peg';d.style.background=C[id].h;d.style.width='34px';d.style.height='34px';p.appendChild(d)});
+  G.secret.forEach(id=>{const d=document.createElement('div');d.className='peg';d.style.background=C[id].h;p.appendChild(d)});
 }
 
 function showEnd(won,timeout){
@@ -531,7 +541,8 @@ function addStat(won){
   }
 }
 
-let statTab=0;
+let statTab=0;let statsFilter='all';
+function setStatsFilter(f){statsFilter=f;['statFAll','statFOff','statFOn'].forEach((id,i)=>{document.getElementById(id).classList.toggle('act',(f==='all'&&i===0)||(f==='offline'&&i===1)||(f==='online'&&i===2)});renderStatsUI()}
 function showStatTab(t){statTab=t;[0,1,2].forEach(i=>{document.getElementById('stab'+i).classList.toggle('act',i===t);document.getElementById('statView'+i).style.display=i===t?'block':'none'});if(t===1)renderPlayerStats();if(t===2)renderComparisonStats()}
 
 function renderStats(){
@@ -545,14 +556,16 @@ function renderStats(){
 }
 function mergeStatsFromApi(apiStats){if(apiStats.items){stats=apiStats.items.map(s=>({name:s.player_name,won:!!(s.won===true||s.won===1||parseInt(s.won,10)===1),att:parseInt(s.attempts,10),diff:s.difficulty||'',mode:s.mode||'1p',date:s.created_at?new Date(s.created_at).toLocaleDateString('cs-CZ'):''}));saveStats()}}
 function renderStatsUI(){
-  const wins=stats.filter(s=>s.won);
-  document.getElementById('stT').textContent=stats.length;
+  const list=statsFilter==='online'?stats.filter(s=>s.mode==='online'):statsFilter==='offline'?stats.filter(s=>s.mode!=='online'):stats;
+  const wins=list.filter(s=>s.won);
+  document.getElementById('stT').textContent=list.length;
   document.getElementById('stW').textContent=wins.length;
   document.getElementById('stB').textContent=wins.length?Math.min(...wins.map(s=>s.att)):'–';
   document.getElementById('stA').textContent=wins.length?(Math.round(wins.reduce((a,s)=>a+s.att,0)/wins.length*10)/10):'–';
+  ['statFAll','statFOff','statFOn'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.classList.toggle('act',(statsFilter==='all'&&i===0)||(statsFilter==='offline'&&i===1)||(statsFilter==='online'&&i===2)});
   const el=document.getElementById('sList');el.innerHTML='';
-  if(!stats.length){el.innerHTML='<div class="noH">Žádné hry zatím.</div>';return}
-  [...stats].reverse().forEach(s=>{
+  if(!list.length){el.innerHTML='<div class="noH">Žádné hry zatím.</div>';return}
+  [...list].reverse().forEach(s=>{
     const d=document.createElement('div');d.className='sItem';
     const timeStr=s.time?formatTime(s.time):'–';
     const modeLabel=s.mode==='online'?' · online':'';
@@ -637,10 +650,10 @@ function showOnlineLobby(){
   document.getElementById('btnCopyLink').style.display=onlineGame.role==='maker'?'block':'none';
   if(onlineGame.role==='maker'){
     if(onlineGame.status==='waiting'){
-      const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil! Zadej tajný kód (tlačítko níže).':'Krok 1: Sdílej odkaz. Krok 2: Zadej tajný kód (tlačítko níže).';
+      const who=onlineGame.player2_name?'Hádající '+onlineGame.player2_name+' se připojil – zadej mu hádanku (tajný kód):':'Sdílej odkaz. Až se někdo připojí, zadej tajný kód.';
       document.getElementById('onlineLobbyMsg').textContent=who;
-      document.getElementById('btnEnterSecret').style.display='block';
-    }else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající se může připojit a hádat.';document.getElementById('btnEnterSecret').style.display='none'}
+      const btn=document.getElementById('btnEnterSecret');btn.style.display='block';btn.textContent=onlineGame.player2_name?'🔐 Zadat hádanku pro '+onlineGame.player2_name:'🔐 Zadat tajný kód (4 barvy)';
+    }else{document.getElementById('onlineLobbyMsg').textContent='Tajný kód je zadán. Hádající '+(onlineGame.player2_name||'')+' může hádat.';document.getElementById('btnEnterSecret').style.display='none'}
   }else{document.getElementById('onlineLobbyMsg').textContent='Čeká se, až tvůrce kódu zadá tajný kód. Stránka se obnoví sama.';document.getElementById('btnEnterSecret').style.display='none'}
 }
 function copyOnlineLink(){
@@ -671,8 +684,8 @@ function pollOnlineGame(){
     onlineGame.status=data.status;
     if(data.player2_name)onlineGame.player2_name=data.player2_name;
     if(data.status==='won'||data.status==='lost'){if(onlinePollId){clearInterval(onlinePollId);onlinePollId=null}G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=true;G.n1=data.player2_name;G.codeMaker=data.player1_name;G.codeBreaker=data.player2_name;if(data.secret)G.secret=data.secret;revealSecret();const won=data.status==='won';addStat(won);if(useSupabase()||API_BASE)apiSaveResult({player_name:data.player1_name,won:!won,attempts:G.hist.length,mode:'online',difficulty:null,game_code:onlineGame.game_code}).catch(()=>{});setTimeout(()=>{showEnd(won);onlineGame=null},500);return}
-    if(data.status==='secret_entered'&&onlineGame.role==='breaker'){startOnlineGame();return}
-    if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker')showTab('game',1);renderBoard();renderPal()}
+    if(data.status==='secret_entered'&&onlineGame.role==='breaker'&&!onlineGame.breakerStarted){onlineGame.breakerStarted=true;startOnlineGame();return}
+    if(data.status==='secret_entered'||data.status==='playing'){G.hist=data.history||[];G.maxA=data.max_attempts||10;G.over=false;if(onlineGame.role==='breaker'){showTab('game',1);renderBoard();if(document.getElementById('palette'))renderPal()}else showOnlineLobby()}
     showOnlineLobby();
   }).catch(()=>{});
 }
